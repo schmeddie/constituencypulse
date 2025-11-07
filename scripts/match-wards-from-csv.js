@@ -291,11 +291,22 @@ async function matchWardsFromCSV() {
       boundary = wardFeature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
       center = calculateCenter(wardFeature.geometry.coordinates);
     } else if (geomType === 'MultiPolygon') {
-      // MultiPolygon: coordinates[0][0] is the outer ring of the first polygon
-      // Use the first/largest polygon as the boundary
-      boundary = wardFeature.geometry.coordinates[0][0].map(([lng, lat]) => [lat, lng]);
-      // For center, use the centroid of all polygons
-      center = calculateCenter(wardFeature.geometry.coordinates.flat());
+      // MultiPolygon: Find the largest polygon (main area, not small islands)
+      let largestPolygon = wardFeature.geometry.coordinates[0][0];
+      let maxPoints = largestPolygon.length;
+
+      // Check all polygons and find the one with most vertices (likely largest area)
+      for (const polygon of wardFeature.geometry.coordinates) {
+        const outerRing = polygon[0];
+        if (outerRing.length > maxPoints) {
+          largestPolygon = outerRing;
+          maxPoints = outerRing.length;
+        }
+      }
+
+      boundary = largestPolygon.map(([lng, lat]) => [lat, lng]);
+      // For center, use the centroid of the largest polygon
+      center = calculateCenter([largestPolygon]);
     } else {
       console.warn(`⚠ Ward ${wardName} has unsupported geometry type: ${geomType}`);
       unmatched++;
