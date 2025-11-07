@@ -128,9 +128,18 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
       layer => activeLayers?.[layer]
     );
 
-    return {
-      type: 'FeatureCollection',
-      features: constituencyData.wards.map((ward, index) => {
+    const features = [];
+    let invalidCount = 0;
+
+    constituencyData.wards.forEach((ward, index) => {
+      try {
+        // Validate ward boundary exists and has enough points
+        if (!ward.boundary || !Array.isArray(ward.boundary) || ward.boundary.length < 3) {
+          console.warn(`Ward ${ward.name} has invalid boundary (too few points)`);
+          invalidCount++;
+          return;
+        }
+
         let fillColor = 'rgba(200, 200, 200, 0.3)'; // Default light grey
 
         if (activeDemographic) {
@@ -150,7 +159,16 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
           }
         }
 
-        return {
+        const coordinates = convertBoundaryToGeoJSON(ward.boundary);
+
+        // Ensure polygon is closed (first point equals last point)
+        const first = coordinates[0];
+        const last = coordinates[coordinates.length - 1];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          coordinates.push([...first]); // Close the polygon
+        }
+
+        features.push({
           type: 'Feature',
           id: index + 1,
           properties: {
@@ -166,10 +184,22 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
           },
           geometry: {
             type: 'Polygon',
-            coordinates: [convertBoundaryToGeoJSON(ward.boundary)]
+            coordinates: [coordinates]
           }
-        };
-      })
+        });
+      } catch (error) {
+        console.error(`Failed to create geometry for ward ${ward.name}:`, error);
+        invalidCount++;
+      }
+    });
+
+    if (invalidCount > 0) {
+      console.warn(`${invalidCount} wards had invalid geometries and were skipped`);
+    }
+
+    return {
+      type: 'FeatureCollection',
+      features: features
     };
   }, [constituencyData, activeLayers]);
 
@@ -208,6 +238,9 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const onMouseMove = useCallback((event) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+
+    // Check if wards-fill layer exists before querying
+    if (!map.getLayer('wards-fill')) return;
 
     const features = map.queryRenderedFeatures(event.point, {
       layers: ['wards-fill']
