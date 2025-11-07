@@ -41,6 +41,7 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
     return {
       population: 5000 + Math.floor(Math.random() * 10000),
       averageAge: null,
+      population0to15: null,
       imdRank: null,
       imdDecile: null,
       incomeRank: null,
@@ -68,6 +69,7 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
     return {
       population: 8000, // Estimate
       averageAge: null,
+      population0to15: null,
       imdRank: null,
       imdDecile: null,
       incomeRank: null,
@@ -90,6 +92,7 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
   // Initialize totals for population and age
   let totalPopulation = 0;
   let totalWeightedAge = 0;
+  let totalPopulation0to15 = 0;
 
   // Calculate average ranks across all LSOAs in this ward
   const averages = {
@@ -139,6 +142,7 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
       const popData = lsoaPopulationData[lsoaCode];
       totalPopulation += popData.population;
       totalWeightedAge += popData.averageAge * popData.population;
+      totalPopulation0to15 += popData.population0to15;
     }
   }
 
@@ -155,6 +159,7 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
   return {
     population: totalPopulation > 0 ? totalPopulation : count * 1600, // Use real data or estimate
     averageAge: averageAge,
+    population0to15: totalPopulation0to15,
     lsoaCount: count,
     imdRank: averages.imdRank,
     imdDecile: averages.imdDecile,
@@ -336,7 +341,8 @@ function loadLSOAPopulationData() {
 
       lsoaPopulation[lsoaCode] = {
         population: total,
-        averageAge: averageAge
+        averageAge: averageAge,
+        population0to15: f0to15 + m0to15  // Store 0-15 population for voter calculations
       };
     }
   }
