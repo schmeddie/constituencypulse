@@ -136,7 +136,13 @@ async function matchWardsFromCSV() {
 
   // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
-  const csvContent = fs.readFileSync(CSV_PATH, 'utf8');
+  let csvContent = fs.readFileSync(CSV_PATH, 'utf8');
+
+  // Remove BOM if present (common in Excel-saved UTF-8 CSV files)
+  if (csvContent.charCodeAt(0) === 0xFEFF) {
+    csvContent = csvContent.slice(1);
+    console.log('Removed UTF-8 BOM from CSV');
+  }
 
   // Detect delimiter (tab or comma)
   const firstLine = csvContent.split('\n')[0];
@@ -147,7 +153,8 @@ async function matchWardsFromCSV() {
     columns: true,
     skip_empty_lines: true,
     delimiter: delimiter,
-    trim: true
+    trim: true,
+    bom: true  // Also tell csv-parse to handle BOM
   });
 
   console.log(`Found ${records.length} ward-constituency mappings`);
