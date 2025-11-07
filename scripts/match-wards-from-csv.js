@@ -280,9 +280,28 @@ async function matchWardsFromCSV() {
       continue;
     }
 
-    // Create ward object
-    const boundary = wardFeature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
-    const center = calculateCenter(wardFeature.geometry.coordinates);
+    // Create ward object - handle both Polygon and MultiPolygon
+    let boundary;
+    let center;
+
+    const geomType = wardFeature.geometry.type;
+
+    if (geomType === 'Polygon') {
+      // Polygon: coordinates[0] is the outer ring
+      boundary = wardFeature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
+      center = calculateCenter(wardFeature.geometry.coordinates);
+    } else if (geomType === 'MultiPolygon') {
+      // MultiPolygon: coordinates[0][0] is the outer ring of the first polygon
+      // Use the first/largest polygon as the boundary
+      boundary = wardFeature.geometry.coordinates[0][0].map(([lng, lat]) => [lat, lng]);
+      // For center, use the centroid of all polygons
+      center = calculateCenter(wardFeature.geometry.coordinates.flat());
+    } else {
+      console.warn(`⚠ Ward ${wardName} has unsupported geometry type: ${geomType}`);
+      unmatched++;
+      unmatchedWards.push(wardName);
+      continue;
+    }
 
     const ward = {
       id: wardCode,
