@@ -109,6 +109,28 @@ body {
   min-width: 250px;
 }
 
+/* Ward tooltip styling */
+.leaflet-tooltip.ward-tooltip {
+  background-color: rgba(31, 41, 55, 0.95);
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  color: white;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.leaflet-tooltip.ward-tooltip::before {
+  border-top-color: rgba(31, 41, 55, 0.95);
+}
+
+/* Choropleth legend styling */
+.choropleth-legend {
+  max-width: 250px;
+  min-width: 200px;
+}
+
 /* Custom marker styles */
 .custom-marker {
   border-radius: 50%;

@@ -16,6 +16,47 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Color scale functions for choropleth maps
+const getColorForAge = (avgAge) => {
+  // Younger (lighter blue) → Older (darker blue)
+  if (avgAge < 30) return '#dbeafe'; // Very light blue
+  if (avgAge < 35) return '#bfdbfe'; // Light blue
+  if (avgAge < 40) return '#93c5fd'; // Medium light blue
+  if (avgAge < 45) return '#60a5fa'; // Medium blue
+  if (avgAge < 50) return '#3b82f6'; // Blue
+  return '#2563eb'; // Dark blue
+};
+
+const getColorForIncome = (medianIncome) => {
+  // Lower income (lighter green) → Higher income (darker green)
+  if (medianIncome < 25000) return '#d1fae5'; // Very light green
+  if (medianIncome < 30000) return '#a7f3d0'; // Light green
+  if (medianIncome < 35000) return '#6ee7b7'; // Medium light green
+  if (medianIncome < 40000) return '#34d399'; // Medium green
+  if (medianIncome < 45000) return '#10b981'; // Green
+  return '#059669'; // Dark green
+};
+
+const getColorForEducation = (degreeLevel) => {
+  // Fewer degrees (lighter purple) → More degrees (darker purple)
+  if (degreeLevel < 30) return '#e9d5ff'; // Very light purple
+  if (degreeLevel < 35) return '#d8b4fe'; // Light purple
+  if (degreeLevel < 40) return '#c084fc'; // Medium light purple
+  if (degreeLevel < 45) return '#a855f7'; // Medium purple
+  if (degreeLevel < 50) return '#9333ea'; // Purple
+  return '#7e22ce'; // Dark purple
+};
+
+const getColorForEmployment = (economicallyActive) => {
+  // Lower employment (lighter orange) → Higher employment (darker orange)
+  if (economicallyActive < 80) return '#fed7aa'; // Very light orange
+  if (economicallyActive < 83) return '#fdba74'; // Light orange
+  if (economicallyActive < 86) return '#fb923c'; // Medium light orange
+  if (economicallyActive < 89) return '#f97316'; // Medium orange
+  if (economicallyActive < 92) return '#ea580c'; // Orange
+  return '#c2410c'; // Dark orange
+};
+
 const InteractiveMap = ({ constituency, events, activeLayers, demographicData, onBoundsChange }) => {
   return (
     <div className="h-full w-full relative" style={{ height: '100%', width: '100%' }}>
@@ -35,9 +76,9 @@ const InteractiveMap = ({ constituency, events, activeLayers, demographicData, o
           positions={constituency.boundary}
           pathOptions={{
             color: '#3b82f6',
-            weight: 3,
+            weight: 2,
             fillColor: '#60a5fa',
-            fillOpacity: 0.1,
+            fillOpacity: 0.05,
           }}
         />
 
@@ -65,7 +106,7 @@ const InteractiveMap = ({ constituency, events, activeLayers, demographicData, o
         <MapEventsHandler onBoundsChange={onBoundsChange} />
 
         {/* Legend */}
-        <MapLegend activeLayers={activeLayers} />
+        <ChoroplethLegend activeLayers={activeLayers} />
       </MapContainer>
     </div>
   );
@@ -93,40 +134,126 @@ const MapEventsHandler = ({ onBoundsChange }) => {
   return null;
 };
 
-// Ward Overlay Component
+// Ward Overlay Component with Choropleth Styling
 const WardOverlay = ({ ward, activeLayers, demographicData }) => {
-  const getWardData = () => {
+  const getWardStyle = () => {
+    // Check which demographic layer is active
     if (activeLayers.age && demographicData.age) {
       const wardData = demographicData.age.wards.find(w => w.wardId === ward.id);
-      return wardData;
+      if (wardData) {
+        return {
+          fillColor: getColorForAge(wardData.avgAge),
+          fillOpacity: 0.6,
+          color: '#555',
+          weight: 1,
+          data: wardData,
+          metric: 'age',
+          value: `${wardData.avgAge} years`,
+          label: 'Average Age'
+        };
+      }
     }
+
     if (activeLayers.income && demographicData.income) {
       const wardData = demographicData.income.wards.find(w => w.wardId === ward.id);
-      return wardData;
+      if (wardData) {
+        return {
+          fillColor: getColorForIncome(wardData.medianIncome),
+          fillOpacity: 0.6,
+          color: '#555',
+          weight: 1,
+          data: wardData,
+          metric: 'income',
+          value: `£${wardData.medianIncome.toLocaleString()}`,
+          label: 'Median Income'
+        };
+      }
     }
+
     if (activeLayers.education && demographicData.education) {
       const wardData = demographicData.education.wards.find(w => w.wardId === ward.id);
-      return wardData;
+      if (wardData) {
+        return {
+          fillColor: getColorForEducation(wardData.degreeLevel),
+          fillOpacity: 0.6,
+          color: '#555',
+          weight: 1,
+          data: wardData,
+          metric: 'education',
+          value: `${wardData.degreeLevel}%`,
+          label: 'Degree Level+'
+        };
+      }
     }
+
     if (activeLayers.employment && demographicData.employment) {
       const wardData = demographicData.employment.wards.find(w => w.wardId === ward.id);
-      return wardData;
+      if (wardData) {
+        return {
+          fillColor: getColorForEmployment(wardData.economicallyActive),
+          fillOpacity: 0.6,
+          color: '#555',
+          weight: 1,
+          data: wardData,
+          metric: 'employment',
+          value: `${wardData.economicallyActive}%`,
+          label: 'Economically Active'
+        };
+      }
     }
-    return null;
+
+    // No demographic layer active - return transparent style
+    return {
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      color: '#999',
+      weight: 1,
+      data: null,
+      metric: null
+    };
   };
 
-  const wardData = getWardData();
-
-  if (!wardData) return null;
+  const style = getWardStyle();
 
   return (
     <Polygon
       positions={ward.boundary}
       pathOptions={{
-        color: wardData.color,
-        weight: 2,
-        fillColor: wardData.color,
-        fillOpacity: wardData.intensity * 0.4,
+        color: style.color,
+        weight: style.weight,
+        fillColor: style.fillColor,
+        fillOpacity: style.fillOpacity,
+      }}
+      eventHandlers={{
+        mouseover: (e) => {
+          const layer = e.target;
+          layer.setStyle({
+            weight: 2,
+            color: '#333',
+            fillOpacity: 0.8
+          });
+
+          // Show tooltip
+          if (style.data) {
+            layer.bindTooltip(
+              `<strong>${ward.name}</strong><br/>${style.label}: ${style.value}`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'ward-tooltip'
+              }
+            ).openTooltip();
+          }
+        },
+        mouseout: (e) => {
+          const layer = e.target;
+          layer.setStyle({
+            weight: style.weight,
+            color: style.color,
+            fillOpacity: style.fillOpacity
+          });
+          layer.closeTooltip();
+        }
       }}
     >
       <Popup>
@@ -135,17 +262,8 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
           <div className="text-sm space-y-1">
             <p><strong>Population:</strong> {ward.population.toLocaleString()}</p>
             <p><strong>Voters:</strong> {ward.voters.toLocaleString()}</p>
-            {activeLayers.age && wardData.avgAge && (
-              <p><strong>Average Age:</strong> {wardData.avgAge} years</p>
-            )}
-            {activeLayers.income && wardData.medianIncome && (
-              <p><strong>Median Income:</strong> £{wardData.medianIncome.toLocaleString()}</p>
-            )}
-            {activeLayers.education && wardData.degreeLevel && (
-              <p><strong>Degree Level+:</strong> {wardData.degreeLevel}%</p>
-            )}
-            {activeLayers.employment && wardData.unemploymentRate !== undefined && (
-              <p><strong>Unemployment:</strong> {wardData.unemploymentRate}%</p>
+            {style.data && (
+              <p><strong>{style.label}:</strong> {style.value}</p>
             )}
           </div>
         </div>
@@ -258,52 +376,96 @@ const EventMarker = ({ event }) => {
   );
 };
 
-// Map Legend Component
-const MapLegend = ({ activeLayers }) => {
+// Choropleth Legend Component
+const ChoroplethLegend = ({ activeLayers }) => {
   const map = useMap();
 
   useEffect(() => {
     const legend = L.control({ position: 'bottomleft' });
 
     legend.onAdd = () => {
-      const div = L.DomUtil.create('div', 'bg-white p-4 rounded-lg shadow-lg');
-      div.innerHTML = `
-        <h4 class="font-semibold text-sm mb-3 text-dark-grey">Legend</h4>
-        ${activeLayers.events ? `
+      const div = L.DomUtil.create('div', 'choropleth-legend bg-white p-4 rounded-lg shadow-lg');
+
+      let content = '<h4 class="font-semibold text-sm mb-3 text-dark-grey">Legend</h4>';
+
+      // Show choropleth gradient if a demographic layer is active
+      if (activeLayers.age) {
+        content += `
+          <div class="mb-2 text-xs font-semibold text-medium-grey">Age Distribution</div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 h-4 rounded" style="background: linear-gradient(to right, #dbeafe, #bfdbfe, #93c5fd, #60a5fa, #3b82f6, #2563eb);"></div>
+          </div>
+          <div class="flex justify-between text-xs text-medium-grey mb-3">
+            <span>Younger</span>
+            <span>Older</span>
+          </div>
+        `;
+      } else if (activeLayers.income) {
+        content += `
+          <div class="mb-2 text-xs font-semibold text-medium-grey">Income Levels</div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 h-4 rounded" style="background: linear-gradient(to right, #d1fae5, #a7f3d0, #6ee7b7, #34d399, #10b981, #059669);"></div>
+          </div>
+          <div class="flex justify-between text-xs text-medium-grey mb-3">
+            <span>Lower</span>
+            <span>Higher</span>
+          </div>
+        `;
+      } else if (activeLayers.education) {
+        content += `
+          <div class="mb-2 text-xs font-semibold text-medium-grey">Education Levels</div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 h-4 rounded" style="background: linear-gradient(to right, #e9d5ff, #d8b4fe, #c084fc, #a855f7, #9333ea, #7e22ce);"></div>
+          </div>
+          <div class="flex justify-between text-xs text-medium-grey mb-3">
+            <span>Fewer Degrees</span>
+            <span>More Degrees</span>
+          </div>
+        `;
+      } else if (activeLayers.employment) {
+        content += `
+          <div class="mb-2 text-xs font-semibold text-medium-grey">Employment Status</div>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="flex-1 h-4 rounded" style="background: linear-gradient(to right, #fed7aa, #fdba74, #fb923c, #f97316, #ea580c, #c2410c);"></div>
+          </div>
+          <div class="flex justify-between text-xs text-medium-grey mb-3">
+            <span>Lower</span>
+            <span>Higher</span>
+          </div>
+        `;
+      }
+
+      // Show event markers legend if events are active
+      if (activeLayers.events) {
+        content += `
+          ${(activeLayers.age || activeLayers.income || activeLayers.education || activeLayers.employment) ? '<div class="border-t border-border-grey pt-3 mt-2"></div>' : ''}
+          <div class="mb-2 text-xs font-semibold text-medium-grey">Events</div>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-              <span class="text-medium-grey">Healthcare Events</span>
+              <span class="w-3 h-3 rounded-full" style="background-color: #3b82f6;"></span>
+              <span class="text-medium-grey">Healthcare</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-green-500"></span>
-              <span class="text-medium-grey">Education Events</span>
+              <span class="w-3 h-3 rounded-full" style="background-color: #10b981;"></span>
+              <span class="text-medium-grey">Education</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-orange-500"></span>
-              <span class="text-medium-grey">Transport Events</span>
+              <span class="w-3 h-3 rounded-full" style="background-color: #f59e0b;"></span>
+              <span class="text-medium-grey">Transport</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-purple-500"></span>
-              <span class="text-medium-grey">Housing Events</span>
+              <span class="w-3 h-3 rounded-full" style="background-color: #8b5cf6;"></span>
+              <span class="text-medium-grey">Housing</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-              <span class="text-medium-grey">Environment Events</span>
+              <span class="w-3 h-3 rounded-full" style="background-color: #22c55e;"></span>
+              <span class="text-medium-grey">Environment</span>
             </div>
           </div>
-        ` : ''}
-        ${activeLayers.age || activeLayers.income || activeLayers.education || activeLayers.employment ? `
-          <div class="mt-3 pt-3 border-t border-border-grey text-xs text-medium-grey">
-            Ward shading shows ${
-              activeLayers.age ? 'age distribution' :
-              activeLayers.income ? 'income levels' :
-              activeLayers.education ? 'education levels' :
-              activeLayers.employment ? 'employment status' : ''
-            }
-          </div>
-        ` : ''}
-      `;
+        `;
+      }
+
+      div.innerHTML = content;
       return div;
     };
 

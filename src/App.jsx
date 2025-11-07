@@ -54,16 +54,31 @@ function App() {
     setVisibleEvents(filtered);
   }, [activeCategory, events, mapBounds]);
 
-  // Toggle data layer
+  // Toggle data layer - only one demographic layer active at a time
   const toggleLayer = (layerName) => {
     setLoading(true);
 
     // Simulate loading delay for smooth transition
     setTimeout(() => {
-      setActiveLayers(prev => ({
-        ...prev,
-        [layerName]: !prev[layerName]
-      }));
+      setActiveLayers(prev => {
+        const demographicLayers = ['age', 'income', 'education', 'employment'];
+
+        // If toggling a demographic layer
+        if (demographicLayers.includes(layerName)) {
+          // Turn off all other demographic layers
+          const newLayers = { ...prev };
+          demographicLayers.forEach(layer => {
+            newLayers[layer] = layer === layerName ? !prev[layerName] : false;
+          });
+          return newLayers;
+        }
+
+        // For non-demographic layers, just toggle normally
+        return {
+          ...prev,
+          [layerName]: !prev[layerName]
+        };
+      });
       setLoading(false);
     }, 300);
   };
