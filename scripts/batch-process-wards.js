@@ -10,6 +10,23 @@ import * as turf from '@turf/turf';
 // Input: Full wards GeoJSON file path
 const WARDS_GEOJSON_PATH = process.argv[2] || './wards.geojson';
 
+// Check for test mode flag
+const TEST_MODE = process.argv.includes('--test');
+
+// Test constituencies to process (10 constituencies for quick testing)
+const TEST_CONSTITUENCIES = [
+  'E14001043', // South Holland and The Deepings
+  'E14000530', // Bexhill and Battle
+  'E14001088', // Leicester South
+  'E14000781', // Loughborough
+  'E14000555', // Birmingham Edgbaston
+  'E14000639', // Bristol West
+  'E14000810', // Manchester Central
+  'E14000803', // Liverpool Riverside
+  'E14000722', // Leeds Central
+  'E14000874'  // Norwich South
+];
+
 // Constituency data directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
 
@@ -142,8 +159,10 @@ async function batchProcessWards() {
   // Check if wards file exists
   if (!fs.existsSync(WARDS_GEOJSON_PATH)) {
     console.error(`Error: Wards file not found: ${WARDS_GEOJSON_PATH}`);
-    console.error('\nUsage: node batch-process-wards.js <path-to-wards-geojson>');
+    console.error('\nUsage: node batch-process-wards.js <path-to-wards-geojson> [--test]');
     console.error('Example: node batch-process-wards.js ./Wards_December_2024.geojson');
+    console.error('Test mode: node batch-process-wards.js ./Wards_December_2024.geojson --test');
+    console.error('\nTest mode processes only 10 constituencies including South Holland and The Deepings');
     process.exit(1);
   }
 
@@ -167,10 +186,17 @@ async function batchProcessWards() {
 
   // Load English constituency files only (E14 prefix)
   // Filter out Scottish (S14) and Welsh (W09) constituencies
-  const constituencyFiles = fs.readdirSync(CONSTITUENCIES_DIR)
+  let constituencyFiles = fs.readdirSync(CONSTITUENCIES_DIR)
     .filter(f => f.endsWith('.json') && f !== 'index.json' && f.startsWith('E14'));
 
-  console.log(`Found ${constituencyFiles.length} English constituencies\n`);
+  // If test mode, only process test constituencies
+  if (TEST_MODE) {
+    const testFiles = TEST_CONSTITUENCIES.map(id => `${id}.json`);
+    constituencyFiles = constituencyFiles.filter(f => testFiles.includes(f));
+    console.log(`\n🧪 TEST MODE: Processing only ${constituencyFiles.length} constituencies\n`);
+  } else {
+    console.log(`Found ${constituencyFiles.length} English constituencies\n`);
+  }
 
   const constituencies = {};
   for (const file of constituencyFiles) {
@@ -272,6 +298,9 @@ async function batchProcessWards() {
   }
 
   console.log(`\n=== Processing Complete ===`);
+  if (TEST_MODE) {
+    console.log(`🧪 TEST MODE - Only ${constituencyFiles.length} constituencies processed`);
+  }
   console.log(`Wards matched: ${matched}`);
   console.log(`Wards unmatched: ${unmatched}`);
   console.log(`Constituencies with wards: ${updatedCount}`);
@@ -280,6 +309,10 @@ async function batchProcessWards() {
 
   if (unmatchedWards.length > 0) {
     console.log(`\nFirst unmatched wards: ${unmatchedWards.slice(0, 5).join(', ')}`);
+  }
+
+  if (TEST_MODE) {
+    console.log(`\n✅ Test complete! If results look good, run without --test flag to process all constituencies.`);
   }
 }
 
