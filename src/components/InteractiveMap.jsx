@@ -57,12 +57,12 @@ const getColorForEmployment = (economicallyActive) => {
   return '#c2410c'; // Dark orange
 };
 
-const InteractiveMap = ({ constituency, events, activeLayers, demographicData, onBoundsChange }) => {
+const InteractiveMap = ({ constituency, wards, events, activeLayers, demographicData, onBoundsChange }) => {
   return (
     <div className="h-full w-full relative" style={{ height: '100%', width: '100%' }}>
       <MapContainer
         center={constituency.center}
-        zoom={12}
+        zoom={11}
         style={{ height: '100%', width: '100%', zIndex: 1 }}
         scrollWheelZoom={true}
       >
@@ -71,19 +71,27 @@ const InteractiveMap = ({ constituency, events, activeLayers, demographicData, o
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Constituency Boundary */}
+        {/* Constituency Boundary - Dark outline, light transparent fill */}
         <Polygon
           positions={constituency.boundary}
           pathOptions={{
-            color: '#3b82f6',
-            weight: 2,
-            fillColor: '#60a5fa',
-            fillOpacity: 0.05,
+            color: '#1f2937',      // Dark grey outline
+            weight: 3,             // Thicker border for constituency
+            fillColor: '#3b82f6',  // Blue fill
+            fillOpacity: 0.08,     // Very light transparent
+            dashArray: '5, 5',     // Dashed line to distinguish from wards
           }}
-        />
+        >
+          <Popup>
+            <div className="p-2">
+              <h3 className="font-semibold text-base">{constituency.name}</h3>
+              <p className="text-sm text-medium-grey mt-1">Westminster Parliamentary Constituency</p>
+            </div>
+          </Popup>
+        </Polygon>
 
         {/* Ward Overlays with Demographics */}
-        {constituency.wards && constituency.wards.map(ward => (
+        {wards && wards.map(ward => (
           <WardOverlay
             key={ward.id}
             ward={ward}
@@ -92,7 +100,7 @@ const InteractiveMap = ({ constituency, events, activeLayers, demographicData, o
           />
         ))}
 
-        {/* Town Markers */}
+        {/* Town Markers - only if available */}
         {constituency.towns && constituency.towns.map((town, index) => (
           <TownMarker key={index} town={town} />
         ))}
@@ -136,16 +144,38 @@ const MapEventsHandler = ({ onBoundsChange }) => {
 
 // Ward Overlay Component with Choropleth Styling
 const WardOverlay = ({ ward, activeLayers, demographicData }) => {
+  // Try to match ward with demographic data by name (fuzzy matching)
+  const findWardData = (dataSource) => {
+    if (!dataSource || !dataSource.wards) return null;
+
+    // Try exact match first
+    let wardData = dataSource.wards.find(w =>
+      w.wardName && w.wardName.toLowerCase() === ward.name.toLowerCase()
+    );
+
+    // Try partial match if exact match fails
+    if (!wardData) {
+      wardData = dataSource.wards.find(w =>
+        w.wardName && (
+          ward.name.toLowerCase().includes(w.wardName.toLowerCase()) ||
+          w.wardName.toLowerCase().includes(ward.name.toLowerCase())
+        )
+      );
+    }
+
+    return wardData;
+  };
+
   const getWardStyle = () => {
     // Check which demographic layer is active
     if (activeLayers.age && demographicData.age) {
-      const wardData = demographicData.age.wards.find(w => w.wardId === ward.id);
+      const wardData = findWardData(demographicData.age);
       if (wardData) {
         return {
           fillColor: getColorForAge(wardData.avgAge),
-          fillOpacity: 0.6,
-          color: '#555',
-          weight: 1,
+          fillOpacity: 0.5,          // Slightly lighter for wards
+          color: '#555',             // Dark grey outline
+          weight: 1,                 // Thin border
           data: wardData,
           metric: 'age',
           value: `${wardData.avgAge} years`,
@@ -155,11 +185,11 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
     }
 
     if (activeLayers.income && demographicData.income) {
-      const wardData = demographicData.income.wards.find(w => w.wardId === ward.id);
+      const wardData = findWardData(demographicData.income);
       if (wardData) {
         return {
           fillColor: getColorForIncome(wardData.medianIncome),
-          fillOpacity: 0.6,
+          fillOpacity: 0.5,
           color: '#555',
           weight: 1,
           data: wardData,
@@ -171,11 +201,11 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
     }
 
     if (activeLayers.education && demographicData.education) {
-      const wardData = demographicData.education.wards.find(w => w.wardId === ward.id);
+      const wardData = findWardData(demographicData.education);
       if (wardData) {
         return {
           fillColor: getColorForEducation(wardData.degreeLevel),
-          fillOpacity: 0.6,
+          fillOpacity: 0.5,
           color: '#555',
           weight: 1,
           data: wardData,
@@ -187,11 +217,11 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
     }
 
     if (activeLayers.employment && demographicData.employment) {
-      const wardData = demographicData.employment.wards.find(w => w.wardId === ward.id);
+      const wardData = findWardData(demographicData.employment);
       if (wardData) {
         return {
           fillColor: getColorForEmployment(wardData.economicallyActive),
-          fillOpacity: 0.6,
+          fillOpacity: 0.5,
           color: '#555',
           weight: 1,
           data: wardData,
@@ -202,12 +232,12 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
       }
     }
 
-    // No demographic layer active - return transparent style
+    // No demographic layer active - return subtle style with light fill
     return {
-      fillColor: 'transparent',
-      fillOpacity: 0,
-      color: '#999',
-      weight: 1,
+      fillColor: '#e5e7eb',      // Light grey fill
+      fillOpacity: 0.15,         // Very subtle
+      color: '#9ca3af',          // Medium grey outline
+      weight: 1,                 // Thin border
       data: null,
       metric: null
     };
@@ -230,20 +260,25 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
           layer.setStyle({
             weight: 2,
             color: '#333',
-            fillOpacity: 0.8
+            fillOpacity: Math.min((style.fillOpacity || 0.15) + 0.2, 0.8)
           });
 
-          // Show tooltip
+          // Show tooltip with ward name and demographic data or placeholders
+          let tooltipContent = `<strong>${ward.name}</strong>`;
+
           if (style.data) {
-            layer.bindTooltip(
-              `<strong>${ward.name}</strong><br/>${style.label}: ${style.value}`,
-              {
-                permanent: false,
-                direction: 'top',
-                className: 'ward-tooltip'
-              }
-            ).openTooltip();
+            tooltipContent += `<br/>${style.label}: ${style.value}`;
+          } else {
+            // Show placeholder data when no demographic layer is active
+            tooltipContent += `<br/><span style="color: #9ca3af;">Median Age: —</span>`;
+            tooltipContent += `<br/><span style="color: #9ca3af;">Income Level: —</span>`;
           }
+
+          layer.bindTooltip(tooltipContent, {
+            permanent: false,
+            direction: 'top',
+            className: 'ward-tooltip'
+          }).openTooltip();
         },
         mouseout: (e) => {
           const layer = e.target;
@@ -260,10 +295,15 @@ const WardOverlay = ({ ward, activeLayers, demographicData }) => {
         <div className="p-2">
           <h3 className="font-semibold text-base mb-2">{ward.name}</h3>
           <div className="text-sm space-y-1">
-            <p><strong>Population:</strong> {ward.population.toLocaleString()}</p>
-            <p><strong>Voters:</strong> {ward.voters.toLocaleString()}</p>
-            {style.data && (
+            <p><strong>Population:</strong> {ward.population ? ward.population.toLocaleString() : '—'}</p>
+            <p><strong>Voters:</strong> {ward.voters ? ward.voters.toLocaleString() : '—'}</p>
+            {style.data ? (
               <p><strong>{style.label}:</strong> {style.value}</p>
+            ) : (
+              <>
+                <p className="text-medium-grey"><strong>Median Age:</strong> —</p>
+                <p className="text-medium-grey"><strong>Median Income:</strong> —</p>
+              </>
             )}
           </div>
         </div>
