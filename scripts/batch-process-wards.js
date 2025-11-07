@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import * as turf from '@turf/turf';
 
 /**
  * Batch process ward GeoJSON and match to constituencies
@@ -12,53 +13,49 @@ const WARDS_GEOJSON_PATH = process.argv[2] || './wards.geojson';
 // Constituency data directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
 
-// Check if point is inside polygon using ray casting algorithm
-function pointInPolygon(point, polygon) {
-  const [x, y] = point;
-  let inside = false;
-
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const [xi, yi] = polygon[i];
-    const [xj, yj] = polygon[j];
-
-    const intersect = ((yi > y) !== (yj > y)) &&
-      (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-
-    if (intersect) inside = !inside;
-  }
-
-  return inside;
-}
-
-// Check if ward centroid is inside constituency
+// Check if ward is within constituency using turf.js for accurate spatial matching
 function wardInConstituency(wardGeometry, constituencyGeometry) {
-  // Calculate ward centroid from the original GeoJSON geometry
-  let sumLat = 0, sumLng = 0, count = 0;
+  try {
+    // Create turf polygon/multipolygon from the constituency geometry
+    const constituencyPoly = turf.feature(constituencyGeometry);
 
-  const wardCoords = wardGeometry.coordinates[0]; // First ring of polygon
-  // Ward coords are [lng, lat] in GeoJSON
-  for (const [lng, lat] of wardCoords) {
-    sumLng += lng;
-    sumLat += lat;
-    count++;
-  }
+    // Calculate the proper centroid of the ward using turf
+    const wardPoly = turf.feature(wardGeometry);
+    const wardCentroid = turf.centroid(wardPoly);
 
-  const centroid = [sumLng / count, sumLat / count]; // [lng, lat]
+    // Method 1: Check if ward centroid is within constituency
+    const centroidInside = turf.booleanPointInPolygon(wardCentroid, constituencyPoly);
 
-  // Check if centroid is in any polygon of the constituency
-  if (constituencyGeometry.type === 'MultiPolygon') {
-    for (const polygon of constituencyGeometry.coordinates) {
-      const ring = polygon[0]; // Outer ring (already in [lng, lat] format)
-      if (pointInPolygon(centroid, ring)) {
-        return true;
-      }
+    if (centroidInside) {
+      return true;
     }
-  } else if (constituencyGeometry.type === 'Polygon') {
-    const ring = constituencyGeometry.coordinates[0]; // Outer ring
-    return pointInPolygon(centroid, ring);
-  }
 
-  return false;
+    // Method 2: If centroid isn't inside, check for polygon intersection
+    // This catches wards that span across constituency boundaries
+    try {
+      const intersects = turf.booleanIntersects(wardPoly, constituencyPoly);
+      if (intersects) {
+        // Check if significant overlap (>25% of ward area is in constituency)
+        const intersection = turf.intersect(turf.featureCollection([wardPoly, constituencyPoly]));
+        if (intersection) {
+          const wardArea = turf.area(wardPoly);
+          const intersectionArea = turf.area(intersection);
+          const overlapPercent = (intersectionArea / wardArea) * 100;
+
+          // If more than 25% of the ward overlaps, consider it a match
+          return overlapPercent > 25;
+        }
+      }
+    } catch (e) {
+      // If intersection calculation fails, fall back to centroid check
+      return false;
+    }
+
+    return false;
+  } catch (error) {
+    console.error(`Error in spatial matching: ${error.message}`);
+    return false;
+  }
 }
 
 // Generate mock demographic data
@@ -168,11 +165,12 @@ async function batchProcessWards() {
 
   console.log(`Found ${wardsGeoJSON.features.length} wards\n`);
 
-  // Load all constituency files
+  // Load English constituency files only (E14 prefix)
+  // Filter out Scottish (S14) and Welsh (W09) constituencies
   const constituencyFiles = fs.readdirSync(CONSTITUENCIES_DIR)
-    .filter(f => f.endsWith('.json') && f !== 'index.json');
+    .filter(f => f.endsWith('.json') && f !== 'index.json' && f.startsWith('E14'));
 
-  console.log(`Found ${constituencyFiles.length} constituencies\n`);
+  console.log(`Found ${constituencyFiles.length} English constituencies\n`);
 
   const constituencies = {};
   for (const file of constituencyFiles) {

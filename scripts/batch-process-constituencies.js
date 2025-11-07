@@ -203,14 +203,24 @@ async function batchProcess() {
     process.exit(1);
   }
 
-  console.log(`Found ${geojson.features.length} constituencies\n`);
+  console.log(`Found ${geojson.features.length} total constituencies\n`);
 
-  // Process each constituency
+  // Filter for English constituencies only (E14 prefix)
+  // Scottish constituencies start with S14, Welsh with W09
+  const englishConstituencies = geojson.features.filter(feature => {
+    const code = feature.properties.PCON24CD;
+    return code && code.startsWith('E14');
+  });
+
+  console.log(`Filtering to ${englishConstituencies.length} English constituencies (ignoring Scottish/Welsh)\n`);
+
+  // Process each English constituency
   const index = [];
   let successCount = 0;
   let errorCount = 0;
+  let skippedCount = 0;
 
-  for (const feature of geojson.features) {
+  for (const feature of englishConstituencies) {
     try {
       const constituencyData = processConstituency(feature);
 
