@@ -176,16 +176,133 @@ Once imported, the start screen will show all constituencies:
 - **Location**: Distributed across wards
 - **Purpose**: Demonstrate event functionality
 
+## Importing Real Ward Boundaries
+
+After importing constituencies, you can add real ward boundaries:
+
+### Prerequisites
+
+Download the official wards GeoJSON from ONS:
+
+**URL**: https://geoportal.statistics.gov.uk/
+
+Search for: **"Wards (December 2024) Boundaries UK"**
+
+Download format: **GeoJSON**
+
+### Step-by-Step Ward Import
+
+**1. Place the Wards GeoJSON File**
+
+Put your downloaded wards file in the `scripts/` directory:
+
+```bash
+cd /home/user/constituencypulse/scripts
+# Copy your wards file here
+```
+
+**2. Run the Ward Processor**
+
+**IMPORTANT**: You must run `batch-process-constituencies.js` FIRST before running this script!
+
+```bash
+node batch-process-wards.js Wards_December_2024.geojson
+```
+
+**What it does:**
+- Reads all ward features from the GeoJSON
+- Wards are already in WGS84 format (no conversion needed)
+- Uses spatial containment to match wards to constituencies
+- Calculates ward centroids and checks if they fall within constituency boundaries
+- Generates mock demographic data for each ward
+- Replaces placeholder wards with real boundaries
+- Updates constituency JSON files with real ward data
+
+**3. Expected Output**
+
+```
+=== Ward Batch Processor ===
+
+Loading: Wards_December_2024.geojson...
+Found 8,694 wards
+
+Found 650 constituencies
+
+Processing wards and matching to constituencies...
+
+✓ Woodside → Croydon South
+✓ Bexhill Central → Bexhill and Battle
+✓ Battle → Bexhill and Battle
+...
+✗ Some Ward - no constituency match found
+
+=== Saving updated constituency files ===
+
+✓ Updated: E14001088.json (12 wards)
+✓ Updated: E14000532.json (18 wards)
+...
+
+=== Processing Complete ===
+Wards matched: 8,650
+Wards unmatched: 44
+Constituencies updated: 650
+Total wards processed: 8,694
+```
+
+**Note on unmatched wards**: Some wards may not match due to:
+- Boundary misalignments in source data
+- Offshore islands or special administrative areas
+- Data quality issues
+
+### How Ward Matching Works
+
+The script uses **point-in-polygon testing**:
+
+1. **Calculate centroid** of each ward polygon
+2. **Test if centroid falls within** any constituency boundary
+3. **Assign ward** to the containing constituency
+4. **Generate mock demographics** (until real data available)
+
+### After Import
+
+Once complete, when you select a constituency:
+- Real ward boundaries display (not placeholder hexagons)
+- Accurate ward shapes and names
+- Mock demographic data (replace with real data later)
+
+### Example: Updated Constituency File
+
+```json
+{
+  "constituency": {
+    "id": "E14001088",
+    "name": "Bexhill and Battle",
+    "center": [51.461990, 0.166682],
+    "zoom": 11,
+    "multiPolygonBoundary": [...]
+  },
+  "wards": [
+    {
+      "id": "E05011489",
+      "name": "Woodside",
+      "boundary": [[51.398013, -0.050419], ...],
+      "center": [51.395, -0.062],
+      "demographics": {
+        "population": 11234,
+        "voters": 8456,
+        "medianAge": 42,
+        "medianIncome": 32500,
+        "higherEducation": 38,
+        "employed": 72
+      }
+    },
+    ...
+  ],
+  "events": [...]
+}
+```
+
 ## Next Steps
-
-### Replace Wards with Real Data
-
-When you have real ward boundaries:
-
-1. Create `batch-process-wards.js` script
-2. Process ward-level GeoJSON for each constituency
-3. Match wards to constituencies by spatial containment
-4. Update constituency JSON files with real ward data
 
 ### Add Real Events
 
