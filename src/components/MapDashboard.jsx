@@ -35,6 +35,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const mapRef = useRef();
   const [hoveredWardId, setHoveredWardId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedWard, setSelectedWard] = useState(null);
 
   // Initialize viewport based on constituency data
   const [viewState, setViewState] = useState({
@@ -370,17 +371,52 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
 
     if (wardFeatures.length > 0) {
       const props = wardFeatures[0].properties;
-      console.log('Ward clicked:', props.name);
-      console.log('Population:', props.population);
-      console.log('IMD Decile:', props.imdDecile, '(1=most deprived, 10=least deprived)');
-      console.log('Income Decile:', props.incomeDecile);
-      console.log('Education Decile:', props.educationDecile);
-      console.log('Employment Decile:', props.employmentDecile);
-      console.log('Health Decile:', props.healthDecile);
-      console.log('Crime Decile:', props.crimeDecile);
-      console.log('Housing Decile:', props.housingDecile);
-      console.log('Environment Decile:', props.environmentDecile);
-      console.log('LSOAs in ward:', props.lsoaCount);
+      const coords = wardFeatures[0].geometry.coordinates;
+
+      // Determine coordinates for popup (center of polygon)
+      let popupCoords;
+      if (wardFeatures[0].geometry.type === 'Polygon') {
+        // Calculate centroid of polygon
+        const ring = coords[0];
+        const lngs = ring.map(c => c[0]);
+        const lats = ring.map(c => c[1]);
+        popupCoords = [
+          lngs.reduce((a, b) => a + b, 0) / lngs.length,
+          lats.reduce((a, b) => a + b, 0) / lats.length
+        ];
+      } else if (wardFeatures[0].geometry.type === 'MultiPolygon') {
+        // Use first polygon's centroid
+        const ring = coords[0][0];
+        const lngs = ring.map(c => c[0]);
+        const lats = ring.map(c => c[1]);
+        popupCoords = [
+          lngs.reduce((a, b) => a + b, 0) / lngs.length,
+          lats.reduce((a, b) => a + b, 0) / lats.length
+        ];
+      }
+
+      setSelectedWard({
+        name: props.name,
+        coordinates: popupCoords,
+        population: props.population,
+        lsoaCount: props.lsoaCount,
+        imdRank: props.imdRank,
+        imdDecile: props.imdDecile,
+        incomeRank: props.incomeRank,
+        incomeDecile: props.incomeDecile,
+        educationRank: props.educationRank,
+        educationDecile: props.educationDecile,
+        employmentRank: props.employmentRank,
+        employmentDecile: props.employmentDecile,
+        healthRank: props.healthRank,
+        healthDecile: props.healthDecile,
+        crimeRank: props.crimeRank,
+        crimeDecile: props.crimeDecile,
+        housingRank: props.housingRank,
+        housingDecile: props.housingDecile,
+        environmentRank: props.environmentRank,
+        environmentDecile: props.environmentDecile
+      });
     }
   }, []);
 
@@ -564,6 +600,80 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             </div>
           </Popup>
         )}
+
+        {/* Ward Popup */}
+        {selectedWard && selectedWard.coordinates && (
+          <Popup
+            longitude={selectedWard.coordinates[0]}
+            latitude={selectedWard.coordinates[1]}
+            anchor="bottom"
+            onClose={() => setSelectedWard(null)}
+            closeButton={true}
+            closeOnClick={false}
+            style={{ maxWidth: '320px' }}
+          >
+            <div style={{ padding: '8px' }}>
+              <h3 style={{
+                margin: '0 0 8px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#1f2937'
+              }}>
+                {selectedWard.name}
+              </h3>
+
+              {activeDemographic && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{
+                    padding: '8px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '6px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#6b7280',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      marginBottom: '4px'
+                    }}>
+                      {activeDemographic === 'imd' && 'IMD - Overall Deprivation'}
+                      {activeDemographic === 'income' && 'Income Deprivation'}
+                      {activeDemographic === 'education' && 'Education Deprivation'}
+                      {activeDemographic === 'employment' && 'Employment Deprivation'}
+                      {activeDemographic === 'health' && 'Health Deprivation'}
+                      {activeDemographic === 'crime' && 'Crime Levels'}
+                      {activeDemographic === 'housing' && 'Housing Barriers'}
+                      {activeDemographic === 'environment' && 'Living Environment'}
+                    </div>
+                    <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
+                      Decile {
+                        activeDemographic === 'imd' ? selectedWard.imdDecile :
+                        activeDemographic === 'income' ? selectedWard.incomeDecile :
+                        activeDemographic === 'education' ? selectedWard.educationDecile :
+                        activeDemographic === 'employment' ? selectedWard.employmentDecile :
+                        activeDemographic === 'health' ? selectedWard.healthDecile :
+                        activeDemographic === 'crime' ? selectedWard.crimeDecile :
+                        activeDemographic === 'housing' ? selectedWard.housingDecile :
+                        activeDemographic === 'environment' ? selectedWard.environmentDecile :
+                        'N/A'
+                      } / 10
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                      (1 = most deprived, 10 = least deprived)
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>
+                <div>Population: ~{selectedWard.population?.toLocaleString() || 'N/A'}</div>
+                <div>LSOAs: {selectedWard.lsoaCount || 'N/A'}</div>
+              </div>
+            </div>
+          </Popup>
+        )}
       </Map>
 
       {/* Legend overlay */}
@@ -580,108 +690,40 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
           fontFamily: 'Inter, sans-serif'
         }}>
           <div style={{ fontWeight: 600, marginBottom: '8px', color: '#1f2937' }}>
-            {activeDemographic === 'age' && 'Median Age'}
-            {activeDemographic === 'income' && 'Median Income (£)'}
-            {activeDemographic === 'education' && 'Higher Education (%)'}
-            {activeDemographic === 'employment' && 'Employment Rate (%)'}
+            {activeDemographic === 'imd' && 'IMD - Overall Deprivation'}
+            {activeDemographic === 'income' && 'Income Deprivation'}
+            {activeDemographic === 'education' && 'Education Deprivation'}
+            {activeDemographic === 'employment' && 'Employment Deprivation'}
+            {activeDemographic === 'health' && 'Health Deprivation'}
+            {activeDemographic === 'crime' && 'Crime Levels'}
+            {activeDemographic === 'housing' && 'Housing Barriers'}
+            {activeDemographic === 'environment' && 'Living Environment'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {activeDemographic === 'age' && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#dbeafe', border: '1px solid #ccc' }}></div>
-                  <span>&lt; 35</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#93c5fd', border: '1px solid #ccc' }}></div>
-                  <span>35-45</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#60a5fa', border: '1px solid #ccc' }}></div>
-                  <span>45-55</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#3b82f6', border: '1px solid #ccc' }}></div>
-                  <span>55-65</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#2563eb', border: '1px solid #ccc' }}></div>
-                  <span>65+</span>
-                </div>
-              </>
-            )}
-            {activeDemographic === 'income' && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#d1fae5', border: '1px solid #ccc' }}></div>
-                  <span>&lt; £25k</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#86efac', border: '1px solid #ccc' }}></div>
-                  <span>£25-30k</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#4ade80', border: '1px solid #ccc' }}></div>
-                  <span>£30-35k</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
-                  <span>£35-40k</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#059669', border: '1px solid #ccc' }}></div>
-                  <span>£40k+</span>
-                </div>
-              </>
-            )}
-            {activeDemographic === 'education' && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#e9d5ff', border: '1px solid #ccc' }}></div>
-                  <span>&lt; 25%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#d8b4fe', border: '1px solid #ccc' }}></div>
-                  <span>25-35%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#c084fc', border: '1px solid #ccc' }}></div>
-                  <span>35-45%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#a855f7', border: '1px solid #ccc' }}></div>
-                  <span>45-55%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#7e22ce', border: '1px solid #ccc' }}></div>
-                  <span>55%+</span>
-                </div>
-              </>
-            )}
-            {activeDemographic === 'employment' && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#fed7aa', border: '1px solid #ccc' }}></div>
-                  <span>&lt; 55%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#fdba74', border: '1px solid #ccc' }}></div>
-                  <span>55-65%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#fb923c', border: '1px solid #ccc' }}></div>
-                  <span>65-75%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#f97316', border: '1px solid #ccc' }}></div>
-                  <span>75-85%</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '12px', background: '#c2410c', border: '1px solid #ccc' }}></div>
-                  <span>85%+</span>
-                </div>
-              </>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '12px', background: '#dc2626', border: '1px solid #ccc' }}></div>
+              <span>Decile 1-2 (Most deprived)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '12px', background: '#f97316', border: '1px solid #ccc' }}></div>
+              <span>Decile 3-4</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '12px', background: '#fbbf24', border: '1px solid #ccc' }}></div>
+              <span>Decile 5-6</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '12px', background: '#84cc16', border: '1px solid #ccc' }}></div>
+              <span>Decile 7-8</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
+              <span>Decile 9-10 (Least deprived)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <div style={{ width: '20px', height: '12px', background: 'rgba(200, 200, 200, 0.3)', border: '1px solid #ccc' }}></div>
+              <span>No data</span>
+            </div>
           </div>
         </div>
       )}
