@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
@@ -13,8 +13,8 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
   ];
 
   return (
-    <aside className="w-72 bg-white border-r border-border-grey overflow-y-auto shadow-md">
-      <div className="p-6">
+    <aside className="w-72 bg-white border-r border-border-grey shadow-md flex flex-col">
+      <div className="p-6 overflow-y-auto flex-1">
         <h2 className="text-lg font-semibold mb-5 text-dark-grey">Data Layers</h2>
 
         {/* Deprivation Indices Section */}
@@ -86,13 +86,13 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
         </div>
 
         {/* Ethnicity Section with Submenu */}
-        <div className="mb-8">
+        <div className="mb-8 overflow-visible">
           <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
             Ethnicity
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-visible">
             <div
-              className="relative"
+              className="relative overflow-visible"
               onMouseEnter={() => setExpandedSubmenu('ethnicity')}
               onMouseLeave={() => setExpandedSubmenu(null)}
             >
@@ -101,7 +101,7 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
               </div>
 
               {expandedSubmenu === 'ethnicity' && (
-                <div className="absolute left-full top-0 ml-2 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-10">
+                <div className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50" style={{top: '200px'}}>
                   <LayerToggle
                     label="% Asian"
                     checked={activeLayers.ethnicityAsian}

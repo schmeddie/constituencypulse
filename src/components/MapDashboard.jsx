@@ -483,7 +483,12 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
         housingRank: props.housingRank,
         housingDecile: props.housingDecile,
         environmentRank: props.environmentRank,
-        environmentDecile: props.environmentDecile
+        environmentDecile: props.environmentDecile,
+        asianPercent: props.asianPercent,
+        blackPercent: props.blackPercent,
+        mixedPercent: props.mixedPercent,
+        whitePercent: props.whitePercent,
+        otherPercent: props.otherPercent
       });
     }
   }, []);
