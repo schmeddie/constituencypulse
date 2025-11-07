@@ -171,8 +171,8 @@ async function matchWardsFromCSV() {
   // Some wards span multiple constituencies
   const wardToConstituencies = {};
   for (const record of records) {
-    const wardCode = record.WD23CD || record.WD24CD; // Try both 2023 and 2024 column names
-    const constituencyCode = record.PCON23CD || record.PCON24CD;
+    const wardCode = record.WD25CD || record.WD24CD || record.WD23CD; // Try 2025, 2024, and 2023
+    const constituencyCode = record.PCON24CD || record.PCON23CD; // Try 2024 and 2023
 
     if (wardCode && constituencyCode) {
       if (!wardToConstituencies[wardCode]) {
@@ -199,11 +199,11 @@ async function matchWardsFromCSV() {
   if (wardsGeoJSON.features.length > 0) {
     const sampleProps = wardsGeoJSON.features[0].properties;
     console.log(`Sample ward properties:`, Object.keys(sampleProps).join(', '));
-    console.log(`Sample ward code fields: reference=${sampleProps.reference}, entity=${sampleProps.entity}, WD23CD=${sampleProps.WD23CD}, WD24CD=${sampleProps.WD24CD}`);
+    console.log(`Sample ward code fields: WD25CD=${sampleProps.WD25CD}, WD24CD=${sampleProps.WD24CD}, WD23CD=${sampleProps.WD23CD}, reference=${sampleProps.reference}, entity=${sampleProps.entity}`);
 
     // Show first 10 ward codes from GeoJSON
     const geojsonWardCodes = wardsGeoJSON.features.slice(0, 10).map(f =>
-      f.properties.WD23CD || f.properties.WD24CD || f.properties.reference || f.properties.entity
+      f.properties.WD25CD || f.properties.WD24CD || f.properties.WD23CD || f.properties.reference || f.properties.entity
     );
     console.log(`First 10 ward codes in GeoJSON: ${geojsonWardCodes.join(', ')}\n`);
   }
@@ -249,14 +249,16 @@ async function matchWardsFromCSV() {
 
   for (const wardFeature of wardsGeoJSON.features) {
     // Try multiple possible property names for ward code
-    const wardCode = wardFeature.properties.WD23CD ||
+    const wardCode = wardFeature.properties.WD25CD ||
                      wardFeature.properties.WD24CD ||
+                     wardFeature.properties.WD23CD ||
                      wardFeature.properties.reference ||
                      wardFeature.properties.entity;
 
     // Try multiple possible property names for ward name
-    const wardName = wardFeature.properties.WD23NM ||
+    const wardName = wardFeature.properties.WD25NM ||
                      wardFeature.properties.WD24NM ||
+                     wardFeature.properties.WD23NM ||
                      wardFeature.properties.name;
 
     if (!wardCode) {
