@@ -1,0 +1,212 @@
+{
+  "constituency": {
+    "id": "E14000584",
+    "name": "Bexhill and Battle",
+    "center": [50.85, 0.47],
+    "zoom": 11,
+    "boundary": [
+      [50.92, 0.38],
+      [50.93, 0.45],
+      [50.91, 0.55],
+      [50.87, 0.58],
+      [50.82, 0.56],
+      [50.78, 0.50],
+      [50.79, 0.40],
+      [50.83, 0.35],
+      [50.88, 0.36],
+      [50.92, 0.38]
+    ]
+  },
+  "wards": [
+    {
+      "id": "ward_001",
+      "name": "Bexhill Central",
+      "boundary": [
+        [50.84, 0.45],
+        [50.85, 0.48],
+        [50.83, 0.49],
+        [50.82, 0.47],
+        [50.83, 0.45],
+        [50.84, 0.45]
+      ],
+      "center": [50.835, 0.47],
+      "demographics": {
+        "population": 12450,
+        "voters": 9320,
+        "medianAge": 52,
+        "medianIncome": 28500,
+        "higherEducation": 32,
+        "employed": 68
+      }
+    },
+    {
+      "id": "ward_002",
+      "name": "Bexhill Old Town",
+      "boundary": [
+        [50.83, 0.49],
+        [50.85, 0.48],
+        [50.86, 0.51],
+        [50.84, 0.52],
+        [50.83, 0.49]
+      ],
+      "center": [50.845, 0.50],
+      "demographics": {
+        "population": 10820,
+        "voters": 8150,
+        "medianAge": 58,
+        "medianIncome": 31200,
+        "higherEducation": 38,
+        "employed": 62
+      }
+    },
+    {
+      "id": "ward_003",
+      "name": "Battle",
+      "boundary": [
+        [50.90, 0.45],
+        [50.91, 0.49],
+        [50.89, 0.51],
+        [50.87, 0.48],
+        [50.88, 0.45],
+        [50.90, 0.45]
+      ],
+      "center": [50.89, 0.48],
+      "demographics": {
+        "population": 9650,
+        "voters": 7280,
+        "medianAge": 48,
+        "medianIncome": 34800,
+        "higherEducation": 45,
+        "employed": 72
+      }
+    },
+    {
+      "id": "ward_004",
+      "name": "Rother Rural North",
+      "boundary": [
+        [50.88, 0.40],
+        [50.91, 0.42],
+        [50.90, 0.45],
+        [50.88, 0.45],
+        [50.86, 0.42],
+        [50.88, 0.40]
+      ],
+      "center": [50.89, 0.425],
+      "demographics": {
+        "population": 8920,
+        "voters": 6850,
+        "medianAge": 55,
+        "medianIncome": 38200,
+        "higherEducation": 41,
+        "employed": 70
+      }
+    },
+    {
+      "id": "ward_005",
+      "name": "Rother Rural South",
+      "boundary": [
+        [50.82, 0.47],
+        [50.83, 0.49],
+        [50.81, 0.52],
+        [50.79, 0.50],
+        [50.80, 0.47],
+        [50.82, 0.47]
+      ],
+      "center": [50.81, 0.49],
+      "demographics": {
+        "population": 7340,
+        "voters": 5620,
+        "medianAge": 61,
+        "medianIncome": 35600,
+        "higherEducation": 36,
+        "employed": 58
+      }
+    },
+    {
+      "id": "ward_006",
+      "name": "Bexhill Collington",
+      "boundary": [
+        [50.84, 0.45],
+        [50.86, 0.46],
+        [50.86, 0.49],
+        [50.85, 0.48],
+        [50.84, 0.45]
+      ],
+      "center": [50.852, 0.47],
+      "demographics": {
+        "population": 11280,
+        "voters": 8510,
+        "medianAge": 50,
+        "medianIncome": 29800,
+        "higherEducation": 34,
+        "employed": 66
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "event_001",
+      "title": "Battle Surgery Expansion Announcement",
+      "category": "healthcare",
+      "coordinates": [50.89, 0.48],
+      "date": "2024-03-15",
+      "summary": "New wing to be added to Battle Medical Centre to serve growing population"
+    },
+    {
+      "id": "event_002",
+      "title": "Bexhill Town Centre Regeneration Meeting",
+      "category": "housing",
+      "coordinates": [50.84, 0.47],
+      "date": "2024-03-20",
+      "summary": "Public consultation on proposed housing development in town centre"
+    },
+    {
+      "id": "event_003",
+      "title": "A259 Coast Road Improvements",
+      "category": "transport",
+      "coordinates": [50.83, 0.49],
+      "date": "2024-03-22",
+      "summary": "County council announces £2.3m investment in coastal road infrastructure"
+    },
+    {
+      "id": "event_004",
+      "title": "Bexhill College Open Day",
+      "category": "education",
+      "coordinates": [50.85, 0.48],
+      "date": "2024-03-25",
+      "summary": "Sixth form college showcasing new vocational training programmes"
+    },
+    {
+      "id": "event_005",
+      "title": "Rural Bus Service Consultation",
+      "category": "transport",
+      "coordinates": [50.88, 0.43],
+      "date": "2024-04-01",
+      "summary": "Residents invited to comment on proposed changes to rural bus routes"
+    },
+    {
+      "id": "event_006",
+      "title": "Battle Community Hospital Campaign",
+      "category": "healthcare",
+      "coordinates": [50.90, 0.48],
+      "date": "2024-04-05",
+      "summary": "Local campaign to prevent closure of minor injuries unit"
+    },
+    {
+      "id": "event_007",
+      "title": "Bexhill Seafront Flood Defence Review",
+      "category": "environment",
+      "coordinates": [50.84, 0.48],
+      "date": "2024-04-10",
+      "summary": "Environment Agency presents plans for coastal protection measures"
+    },
+    {
+      "id": "event_008",
+      "title": "Claverham Community School Funding",
+      "category": "education",
+      "coordinates": [50.91, 0.47],
+      "date": "2024-04-12",
+      "summary": "Primary school receives grant for new sports facilities"
+    }
+  ]
+}

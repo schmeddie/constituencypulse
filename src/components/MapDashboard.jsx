@@ -1,257 +1,248 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import Map, { Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import bexhillBattleData from '../data/bexhill-battle.json';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
 
-// Mock GeoJSON: Westminster Parliamentary Constituencies (ONS Data)
-const constituencyData = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      id: 1,
-      properties: {
-        PCON24NM: 'Loughborough',
-        PCON24CD: 'E14000797'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [-1.25, 52.72],
-          [-1.15, 52.72],
-          [-1.15, 52.62],
-          [-1.25, 52.62],
-          [-1.25, 52.72]
-        ]]
-      }
-    },
-    {
-      type: 'Feature',
-      id: 2,
-      properties: {
-        PCON24NM: 'Leicester South',
-        PCON24CD: 'E14000795'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [-1.15, 52.60],
-          [-1.05, 52.60],
-          [-1.05, 52.50],
-          [-1.15, 52.50],
-          [-1.15, 52.60]
-        ]]
-      }
-    },
-    {
-      type: 'Feature',
-      id: 3,
-      properties: {
-        PCON24NM: 'Nottingham East',
-        PCON24CD: 'E14000849'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [-1.05, 52.98],
-          [-0.95, 52.98],
-          [-0.95, 52.88],
-          [-1.05, 52.88],
-          [-1.05, 52.98]
-        ]]
-      }
-    },
-    {
-      type: 'Feature',
-      id: 4,
-      properties: {
-        PCON24NM: 'Derby North',
-        PCON24CD: 'E14000665'
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          [-1.50, 52.95],
-          [-1.40, 52.95],
-          [-1.40, 52.85],
-          [-1.50, 52.85],
-          [-1.50, 52.95]
-        ]]
-      }
-    }
-  ]
+// Helper: Convert [lat, lng] boundary to [lng, lat] GeoJSON coordinates
+const convertBoundaryToGeoJSON = (boundary) => {
+  return boundary.map(coord => [coord[1], coord[0]]);
 };
 
-// Mock GeoJSON: Local Events (Point Data)
-const eventsData = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {
-        title: 'New Health Centre Opening',
-        category: 'Healthcare'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.20, 52.67]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        title: 'Town Hall Meeting on Education Budget',
-        category: 'Education'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.10, 52.55]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        title: 'Transport Infrastructure Consultation',
-        category: 'Transport'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.00, 52.93]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        title: 'Housing Development Proposal',
-        category: 'Housing'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.45, 52.90]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        title: 'Community Health Fair',
-        category: 'Healthcare'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.08, 52.58]
-      }
-    },
-    {
-      type: 'Feature',
-      properties: {
-        title: 'Bus Route Expansion Meeting',
-        category: 'Transport'
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [-1.22, 52.70]
-      }
-    }
-  ]
+// Helper: Get color for demographic value
+const getColorForAge = (medianAge) => {
+  if (medianAge < 35) return '#dbeafe';
+  if (medianAge < 45) return '#93c5fd';
+  if (medianAge < 55) return '#60a5fa';
+  if (medianAge < 65) return '#3b82f6';
+  return '#2563eb';
 };
 
-const MapDashboard = () => {
+const getColorForIncome = (medianIncome) => {
+  if (medianIncome < 25000) return '#d1fae5';
+  if (medianIncome < 30000) return '#86efac';
+  if (medianIncome < 35000) return '#4ade80';
+  if (medianIncome < 40000) return '#22c55e';
+  return '#059669';
+};
+
+const getColorForEducation = (higherEducation) => {
+  if (higherEducation < 25) return '#e9d5ff';
+  if (higherEducation < 35) return '#d8b4fe';
+  if (higherEducation < 45) return '#c084fc';
+  if (higherEducation < 55) return '#a855f7';
+  return '#7e22ce';
+};
+
+const getColorForEmployment = (employed) => {
+  if (employed < 55) return '#fed7aa';
+  if (employed < 65) return '#fdba74';
+  if (employed < 75) return '#fb923c';
+  if (employed < 85) return '#f97316';
+  return '#c2410c';
+};
+
+const MapDashboard = ({ activeLayers, visibleEvents }) => {
   const mapRef = useRef();
   const [viewState, setViewState] = useState({
-    longitude: -3.0,
-    latitude: 55.0,
-    zoom: 5
+    longitude: bexhillBattleData.constituency.center[1],
+    latitude: bexhillBattleData.constituency.center[0],
+    zoom: bexhillBattleData.constituency.zoom
   });
-  const [hoveredConstituencyId, setHoveredConstituencyId] = useState(null);
+  const [hoveredWardId, setHoveredWardId] = useState(null);
 
-  // Mouse move handler for constituency hover effect
+  // Convert constituency boundary to GeoJSON
+  const constituencyGeoJSON = useMemo(() => ({
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      id: bexhillBattleData.constituency.id,
+      properties: {
+        name: bexhillBattleData.constituency.name
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [convertBoundaryToGeoJSON(bexhillBattleData.constituency.boundary)]
+      }
+    }]
+  }), []);
+
+  // Convert wards to GeoJSON with demographic data
+  const wardsGeoJSON = useMemo(() => {
+    const activeDemographic = ['age', 'income', 'education', 'employment'].find(
+      layer => activeLayers[layer]
+    );
+
+    return {
+      type: 'FeatureCollection',
+      features: bexhillBattleData.wards.map((ward, index) => {
+        let fillColor = 'rgba(200, 200, 200, 0.3)'; // Default light grey
+
+        if (activeDemographic) {
+          switch (activeDemographic) {
+            case 'age':
+              fillColor = getColorForAge(ward.demographics.medianAge);
+              break;
+            case 'income':
+              fillColor = getColorForIncome(ward.demographics.medianIncome);
+              break;
+            case 'education':
+              fillColor = getColorForEducation(ward.demographics.higherEducation);
+              break;
+            case 'employment':
+              fillColor = getColorForEmployment(ward.demographics.employed);
+              break;
+          }
+        }
+
+        return {
+          type: 'Feature',
+          id: index + 1,
+          properties: {
+            id: ward.id,
+            name: ward.name,
+            population: ward.demographics.population,
+            voters: ward.demographics.voters,
+            medianAge: ward.demographics.medianAge,
+            medianIncome: ward.demographics.medianIncome,
+            higherEducation: ward.demographics.higherEducation,
+            employed: ward.demographics.employed,
+            fillColor: fillColor
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [convertBoundaryToGeoJSON(ward.boundary)]
+          }
+        };
+      })
+    };
+  }, [activeLayers]);
+
+  // Convert events to GeoJSON (only if events layer is active)
+  const eventsGeoJSON = useMemo(() => {
+    if (!activeLayers?.events || !visibleEvents) {
+      return {
+        type: 'FeatureCollection',
+        features: []
+      };
+    }
+
+    const events = visibleEvents.map((event, index) => ({
+      type: 'Feature',
+      id: index + 1,
+      properties: {
+        id: event.id,
+        title: event.title || event.name,
+        category: event.category,
+        date: event.date,
+        summary: event.summary
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [event.coordinates[1], event.coordinates[0]] // [lng, lat]
+      }
+    }));
+
+    return {
+      type: 'FeatureCollection',
+      features: events
+    };
+  }, [activeLayers, visibleEvents]);
+
+  // Mouse move handler for ward hover effect
   const onMouseMove = useCallback((event) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
     const features = map.queryRenderedFeatures(event.point, {
-      layers: ['constituency-fill']
+      layers: ['wards-fill']
     });
 
     if (features.length > 0) {
       const feature = features[0];
 
       // Clear previous hover state
-      if (hoveredConstituencyId !== null && hoveredConstituencyId !== feature.id) {
+      if (hoveredWardId !== null && hoveredWardId !== feature.id) {
         map.setFeatureState(
-          { source: 'constituencies', id: hoveredConstituencyId },
+          { source: 'wards', id: hoveredWardId },
           { hover: false }
         );
       }
 
       // Set new hover state
-      setHoveredConstituencyId(feature.id);
+      setHoveredWardId(feature.id);
       map.setFeatureState(
-        { source: 'constituencies', id: feature.id },
+        { source: 'wards', id: feature.id },
         { hover: true }
       );
 
-      // Change cursor to pointer
       map.getCanvas().style.cursor = 'pointer';
     } else {
       // Clear hover state if not over any feature
-      if (hoveredConstituencyId !== null) {
+      if (hoveredWardId !== null) {
         map.setFeatureState(
-          { source: 'constituencies', id: hoveredConstituencyId },
+          { source: 'wards', id: hoveredWardId },
           { hover: false }
         );
-        setHoveredConstituencyId(null);
+        setHoveredWardId(null);
       }
       map.getCanvas().style.cursor = '';
     }
-  }, [hoveredConstituencyId]);
+  }, [hoveredWardId]);
 
   // Mouse leave handler
   const onMouseLeave = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    if (hoveredConstituencyId !== null) {
+    if (hoveredWardId !== null) {
       map.setFeatureState(
-        { source: 'constituencies', id: hoveredConstituencyId },
+        { source: 'wards', id: hoveredWardId },
         { hover: false }
       );
-      setHoveredConstituencyId(null);
+      setHoveredWardId(null);
     }
     map.getCanvas().style.cursor = '';
-  }, [hoveredConstituencyId]);
+  }, [hoveredWardId]);
 
-  // Click handler for constituencies and events
+  // Click handler for wards and events
   const onClick = useCallback((event) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    // Check for constituency click
-    const constituencyFeatures = map.queryRenderedFeatures(event.point, {
-      layers: ['constituency-fill']
-    });
-
-    if (constituencyFeatures.length > 0) {
-      const constituencyName = constituencyFeatures[0].properties.PCON24NM;
-      console.log('Constituency clicked:', constituencyName);
-      return;
-    }
-
-    // Check for event click
+    // Check for event click first (higher priority)
     const eventFeatures = map.queryRenderedFeatures(event.point, {
       layers: ['events-circle']
     });
 
     if (eventFeatures.length > 0) {
       const eventTitle = eventFeatures[0].properties.title;
-      console.log('Event clicked:', eventTitle);
+      const eventCategory = eventFeatures[0].properties.category;
+      console.log('Event clicked:', eventTitle, `(${eventCategory})`);
+      return;
+    }
+
+    // Check for ward click
+    const wardFeatures = map.queryRenderedFeatures(event.point, {
+      layers: ['wards-fill']
+    });
+
+    if (wardFeatures.length > 0) {
+      const wardName = wardFeatures[0].properties.name;
+      const wardPop = wardFeatures[0].properties.population;
+      console.log('Ward clicked:', wardName, `(Population: ${wardPop})`);
     }
   }, []);
 
+  // Determine which demographic layer is active for legend/info
+  const activeDemographic = ['age', 'income', 'education', 'employment'].find(
+    layer => activeLayers?.[layer]
+  );
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       <Map
         ref={mapRef}
         {...viewState}
@@ -262,73 +253,217 @@ const MapDashboard = () => {
         mapStyle="mapbox://styles/mapbox/light-v10"
         mapboxAccessToken={MAPBOX_TOKEN}
         style={{ width: '100%', height: '100%' }}
-        interactiveLayerIds={['constituency-fill', 'events-circle']}
+        interactiveLayerIds={['wards-fill', 'events-circle']}
       >
-        {/* Constituency Boundaries Source */}
+        {/* Constituency Boundary */}
         <Source
-          id="constituencies"
+          id="constituency"
           type="geojson"
-          data={constituencyData}
+          data={constituencyGeoJSON}
         >
-          {/* Fill layer (transparent interior) */}
           <Layer
-            id="constituency-fill"
+            id="constituency-line"
+            type="line"
+            paint={{
+              'line-color': '#1f2937',
+              'line-width': 3,
+              'line-dasharray': [2, 2]
+            }}
+          />
+        </Source>
+
+        {/* Ward Boundaries with Demographics */}
+        <Source
+          id="wards"
+          type="geojson"
+          data={wardsGeoJSON}
+        >
+          {/* Fill layer with demographic colors */}
+          <Layer
+            id="wards-fill"
             type="fill"
             paint={{
-              'fill-color': 'rgba(0,0,0,0)',
-              'fill-opacity': 0
+              'fill-color': ['get', 'fillColor'],
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.8,
+                0.6
+              ]
             }}
           />
 
-          {/* Line layer (stroke/outline) */}
+          {/* Ward borders */}
           <Layer
-            id="constituency-line"
+            id="wards-line"
             type="line"
             paint={{
               'line-color': [
                 'case',
                 ['boolean', ['feature-state', 'hover'], false],
-                '#007cbf', // Hover color (blue)
-                '#CCCCCC'  // Default color (light grey)
+                '#333333',
+                '#666666'
               ],
               'line-width': [
                 'case',
                 ['boolean', ['feature-state', 'hover'], false],
-                3, // Hover width
-                1  // Default width
+                2,
+                1
               ]
             }}
           />
         </Source>
 
-        {/* Events Source */}
-        <Source
-          id="events"
-          type="geojson"
-          data={eventsData}
-        >
-          {/* Circle layer with data-driven styling */}
-          <Layer
-            id="events-circle"
-            type="circle"
-            paint={{
-              'circle-radius': 6,
-              'circle-color': [
-                'match',
-                ['get', 'category'],
-                'Healthcare', '#3BB2D0',    // Blue
-                'Education', '#A50F15',     // Dark red
-                'Transport', '#FFCC00',     // Yellow
-                'Housing', '#8B4513',       // Brown
-                'Environment', '#228B22',   // Green
-                '#999999'                   // Default grey
-              ],
-              'circle-stroke-width': 2,
-              'circle-stroke-color': '#FFFFFF'
-            }}
-          />
-        </Source>
+        {/* Events (only shown if events layer is active) */}
+        {activeLayers?.events && eventsGeoJSON.features.length > 0 && (
+          <Source
+            id="events"
+            type="geojson"
+            data={eventsGeoJSON}
+          >
+            <Layer
+              id="events-circle"
+              type="circle"
+              paint={{
+                'circle-radius': 8,
+                'circle-color': [
+                  'match',
+                  ['get', 'category'],
+                  'healthcare', '#3BB2D0',
+                  'education', '#A50F15',
+                  'transport', '#FFCC00',
+                  'housing', '#8B4513',
+                  'environment', '#228B22',
+                  '#999999'
+                ],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#FFFFFF',
+                'circle-opacity': 0.9
+              }}
+            />
+          </Source>
+        )}
       </Map>
+
+      {/* Legend overlay */}
+      {activeDemographic && (
+        <div style={{
+          position: 'absolute',
+          bottom: '30px',
+          right: '20px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontSize: '12px',
+          fontFamily: 'Inter, sans-serif'
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: '8px', color: '#1f2937' }}>
+            {activeDemographic === 'age' && 'Median Age'}
+            {activeDemographic === 'income' && 'Median Income (£)'}
+            {activeDemographic === 'education' && 'Higher Education (%)'}
+            {activeDemographic === 'employment' && 'Employment Rate (%)'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {activeDemographic === 'age' && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#dbeafe', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 35</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#93c5fd', border: '1px solid #ccc' }}></div>
+                  <span>35-45</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#60a5fa', border: '1px solid #ccc' }}></div>
+                  <span>45-55</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#3b82f6', border: '1px solid #ccc' }}></div>
+                  <span>55-65</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#2563eb', border: '1px solid #ccc' }}></div>
+                  <span>65+</span>
+                </div>
+              </>
+            )}
+            {activeDemographic === 'income' && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#d1fae5', border: '1px solid #ccc' }}></div>
+                  <span>&lt; £25k</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#86efac', border: '1px solid #ccc' }}></div>
+                  <span>£25-30k</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#4ade80', border: '1px solid #ccc' }}></div>
+                  <span>£30-35k</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
+                  <span>£35-40k</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#059669', border: '1px solid #ccc' }}></div>
+                  <span>£40k+</span>
+                </div>
+              </>
+            )}
+            {activeDemographic === 'education' && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#e9d5ff', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 25%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#d8b4fe', border: '1px solid #ccc' }}></div>
+                  <span>25-35%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#c084fc', border: '1px solid #ccc' }}></div>
+                  <span>35-45%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#a855f7', border: '1px solid #ccc' }}></div>
+                  <span>45-55%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#7e22ce', border: '1px solid #ccc' }}></div>
+                  <span>55%+</span>
+                </div>
+              </>
+            )}
+            {activeDemographic === 'employment' && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fed7aa', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 55%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fdba74', border: '1px solid #ccc' }}></div>
+                  <span>55-65%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fb923c', border: '1px solid #ccc' }}></div>
+                  <span>65-75%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#f97316', border: '1px solid #ccc' }}></div>
+                  <span>75-85%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#c2410c', border: '1px solid #ccc' }}></div>
+                  <span>85%+</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

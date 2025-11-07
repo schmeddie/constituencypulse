@@ -6,17 +6,19 @@ import MapDashboard from './components/MapDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Import data
-import eventsData from './data/events.json';
-import constituencyData from './data/constituencies.json';
+import bexhillBattleData from './data/bexhill-battle.json';
 import ageData from './data/demographics/age.json';
 import incomeData from './data/demographics/income.json';
 import educationData from './data/demographics/education.json';
 import employmentData from './data/demographics/employment.json';
 
 function App() {
-  const [events, setEvents] = useState(eventsData);
-  const [constituency, setConstituency] = useState(constituencyData);
-  const [wards, setWards] = useState(constituencyData.wards || []);
+  const [events, setEvents] = useState(bexhillBattleData.events);
+  const [constituency, setConstituency] = useState({
+    name: bexhillBattleData.constituency.name,
+    id: bexhillBattleData.constituency.id
+  });
+  const [wards, setWards] = useState(bexhillBattleData.wards);
   const [activeLayers, setActiveLayers] = useState({
     events: true,
     age: false,
@@ -106,9 +108,9 @@ function App() {
     }
 
     const searchResults = events.filter(event =>
-      event.name.toLowerCase().includes(query.toLowerCase()) ||
-      event.category.toLowerCase().includes(query.toLowerCase()) ||
-      event.summary.toLowerCase().includes(query.toLowerCase())
+      (event.title || event.name || '').toLowerCase().includes(query.toLowerCase()) ||
+      (event.category || '').toLowerCase().includes(query.toLowerCase()) ||
+      (event.summary || '').toLowerCase().includes(query.toLowerCase())
     );
 
     setVisibleEvents(searchResults);
@@ -128,7 +130,10 @@ function App() {
 
         <main className="flex-1 relative">
           {loading && <LoadingSpinner />}
-          <MapDashboard />
+          <MapDashboard
+            activeLayers={activeLayers}
+            visibleEvents={visibleEvents}
+          />
         </main>
 
         <RightSidebar
