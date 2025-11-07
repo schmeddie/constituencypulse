@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -17,15 +17,13 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const InteractiveMap = ({ constituency, events, activeLayers, demographicData, onBoundsChange }) => {
-  const [map, setMap] = useState(null);
-
   return (
-    <div className="h-full w-full relative">
+    <div className="h-full w-full relative" style={{ height: '100%', width: '100%' }}>
       <MapContainer
         center={constituency.center}
         zoom={12}
-        className="h-full w-full"
-        whenCreated={setMap}
+        style={{ height: '100%', width: '100%', zIndex: 1 }}
+        scrollWheelZoom={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
