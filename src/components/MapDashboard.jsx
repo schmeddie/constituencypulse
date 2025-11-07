@@ -297,6 +297,12 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             // Environment
             environmentRank: ward.demographics.environmentRank,
             environmentDecile: ward.demographics.environmentDecile,
+            // Ethnicity
+            asianPercent: ward.demographics.asianPercent,
+            blackPercent: ward.demographics.blackPercent,
+            mixedPercent: ward.demographics.mixedPercent,
+            whitePercent: ward.demographics.whitePercent,
+            otherPercent: ward.demographics.otherPercent,
             fillColor: fillColor
           },
           geometry: geometry
