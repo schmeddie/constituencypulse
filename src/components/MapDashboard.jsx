@@ -31,6 +31,27 @@ const getColorForCrime = (decile) => getColorForDeprivation(decile);
 const getColorForHousing = (decile) => getColorForDeprivation(decile);
 const getColorForEnvironment = (decile) => getColorForDeprivation(decile);
 
+// Helper: Get color for average age
+const getColorForAge = (age) => {
+  if (!age) return 'rgba(200, 200, 200, 0.3)'; // No data
+  if (age < 35) return '#dbeafe'; // Very young - light blue
+  if (age < 40) return '#93c5fd'; // Young - blue
+  if (age < 45) return '#60a5fa'; // Middle-aged - medium blue
+  if (age < 50) return '#3b82f6'; // Mature - darker blue
+  return '#2563eb'; // Older - dark blue
+};
+
+// Helper: Get color for population density (people per sq km)
+// Calculated as population / area
+const getColorForPopulationDensity = (density) => {
+  if (!density) return 'rgba(200, 200, 200, 0.3)'; // No data
+  if (density < 1000) return '#f0fdf4'; // Very sparse - light green
+  if (density < 3000) return '#bbf7d0'; // Sparse - green
+  if (density < 5000) return '#86efac'; // Medium - medium green
+  if (density < 8000) return '#4ade80'; // Dense - darker green
+  return '#22c55e'; // Very dense - dark green
+};
+
 const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const mapRef = useRef();
   const [hoveredWardId, setHoveredWardId] = useState(null);
@@ -113,12 +134,27 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
       };
     }
 
-    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment'].find(
+    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity'].find(
       layer => activeLayers?.[layer]
     );
 
     const features = [];
     let invalidCount = 0;
+
+    // Helper: Calculate approximate area of a polygon in square kilometers
+    const calculateArea = (boundary) => {
+      // Simplified area calculation using shoelace formula
+      // Note: This is an approximation that works reasonably well for small areas
+      let area = 0;
+      for (let i = 0; i < boundary.length - 1; i++) {
+        const [lat1, lng1] = boundary[i];
+        const [lat2, lng2] = boundary[i + 1];
+        area += (lng2 - lng1) * (lat2 + lat1) / 2;
+      }
+      // Convert to approximate square kilometers (rough approximation)
+      // At ~50° latitude, 1 degree ≈ 111km (latitude) and ~71km (longitude)
+      return Math.abs(area) * 111 * 71;
+    };
 
     constituencyData.wards.forEach((ward, index) => {
       try {
@@ -156,6 +192,14 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
               break;
             case 'environment':
               fillColor = getColorForEnvironment(ward.demographics.environmentDecile);
+              break;
+            case 'age':
+              fillColor = getColorForAge(ward.demographics.averageAge);
+              break;
+            case 'populationDensity':
+              const area = calculateArea(ward.boundary);
+              const density = area > 0 ? Math.round(ward.demographics.population / area) : 0;
+              fillColor = getColorForPopulationDensity(density);
               break;
           }
         }
@@ -205,6 +249,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             id: ward.id,
             name: ward.name,
             population: ward.demographics.population,
+            averageAge: ward.demographics.averageAge,
             lsoaCount: ward.demographics.lsoaCount,
             // IMD - Index of Multiple Deprivation
             imdRank: ward.demographics.imdRank,
@@ -399,6 +444,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
         name: props.name,
         coordinates: popupCoords,
         population: props.population,
+        averageAge: props.averageAge,
         lsoaCount: props.lsoaCount,
         imdRank: props.imdRank,
         imdDecile: props.imdDecile,
@@ -421,7 +467,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   }, []);
 
   // Determine which demographic layer is active for legend/info
-  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment'].find(
+  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity'].find(
     layer => activeLayers?.[layer]
   );
 
@@ -646,23 +692,33 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
                       {activeDemographic === 'crime' && 'Crime Levels'}
                       {activeDemographic === 'housing' && 'Housing Barriers'}
                       {activeDemographic === 'environment' && 'Living Environment'}
+                      {activeDemographic === 'age' && 'Average Age'}
+                      {activeDemographic === 'populationDensity' && 'Population Density'}
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
-                      Decile {
-                        activeDemographic === 'imd' ? selectedWard.imdDecile :
-                        activeDemographic === 'income' ? selectedWard.incomeDecile :
-                        activeDemographic === 'education' ? selectedWard.educationDecile :
-                        activeDemographic === 'employment' ? selectedWard.employmentDecile :
-                        activeDemographic === 'health' ? selectedWard.healthDecile :
-                        activeDemographic === 'crime' ? selectedWard.crimeDecile :
-                        activeDemographic === 'housing' ? selectedWard.housingDecile :
-                        activeDemographic === 'environment' ? selectedWard.environmentDecile :
-                        'N/A'
-                      } / 10
+                      {activeDemographic === 'age' ? (
+                        `${selectedWard.averageAge || 'N/A'} years`
+                      ) : activeDemographic === 'populationDensity' ? (
+                        'View on map'
+                      ) : (
+                        `Decile ${
+                          activeDemographic === 'imd' ? selectedWard.imdDecile :
+                          activeDemographic === 'income' ? selectedWard.incomeDecile :
+                          activeDemographic === 'education' ? selectedWard.educationDecile :
+                          activeDemographic === 'employment' ? selectedWard.employmentDecile :
+                          activeDemographic === 'health' ? selectedWard.healthDecile :
+                          activeDemographic === 'crime' ? selectedWard.crimeDecile :
+                          activeDemographic === 'housing' ? selectedWard.housingDecile :
+                          activeDemographic === 'environment' ? selectedWard.environmentDecile :
+                          'N/A'
+                        } / 10`
+                      )}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
-                      (1 = most deprived, 10 = least deprived)
-                    </div>
+                    {activeDemographic !== 'age' && activeDemographic !== 'populationDensity' && (
+                      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                        (1 = most deprived, 10 = least deprived)
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -698,32 +754,84 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             {activeDemographic === 'crime' && 'Crime Levels'}
             {activeDemographic === 'housing' && 'Housing Barriers'}
             {activeDemographic === 'environment' && 'Living Environment'}
+            {activeDemographic === 'age' && 'Average Age'}
+            {activeDemographic === 'populationDensity' && 'Population Density'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '12px', background: '#dc2626', border: '1px solid #ccc' }}></div>
-              <span>Decile 1-2 (Most deprived)</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '12px', background: '#f97316', border: '1px solid #ccc' }}></div>
-              <span>Decile 3-4</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '12px', background: '#fbbf24', border: '1px solid #ccc' }}></div>
-              <span>Decile 5-6</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '12px', background: '#84cc16', border: '1px solid #ccc' }}></div>
-              <span>Decile 7-8</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
-              <span>Decile 9-10 (Least deprived)</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-              <div style={{ width: '20px', height: '12px', background: 'rgba(200, 200, 200, 0.3)', border: '1px solid #ccc' }}></div>
-              <span>No data</span>
-            </div>
+            {activeDemographic === 'age' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#dbeafe', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 35 years</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#93c5fd', border: '1px solid #ccc' }}></div>
+                  <span>35-40 years</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#60a5fa', border: '1px solid #ccc' }}></div>
+                  <span>40-45 years</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#3b82f6', border: '1px solid #ccc' }}></div>
+                  <span>45-50 years</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#2563eb', border: '1px solid #ccc' }}></div>
+                  <span>50+ years</span>
+                </div>
+              </>
+            ) : activeDemographic === 'populationDensity' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#f0fdf4', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 1k per km²</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#bbf7d0', border: '1px solid #ccc' }}></div>
+                  <span>1k-3k per km²</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#86efac', border: '1px solid #ccc' }}></div>
+                  <span>3k-5k per km²</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#4ade80', border: '1px solid #ccc' }}></div>
+                  <span>5k-8k per km²</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
+                  <span>8k+ per km²</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#dc2626', border: '1px solid #ccc' }}></div>
+                  <span>Decile 1-2 (Most deprived)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#f97316', border: '1px solid #ccc' }}></div>
+                  <span>Decile 3-4</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fbbf24', border: '1px solid #ccc' }}></div>
+                  <span>Decile 5-6</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#84cc16', border: '1px solid #ccc' }}></div>
+                  <span>Decile 7-8</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
+                  <span>Decile 9-10 (Least deprived)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                  <div style={{ width: '20px', height: '12px', background: 'rgba(200, 200, 200, 0.3)', border: '1px solid #ccc' }}></div>
+                  <span>No data</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

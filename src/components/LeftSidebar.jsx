@@ -62,6 +62,25 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
           </div>
         </div>
 
+        {/* Demographics Section */}
+        <div className="mb-8">
+          <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
+            Demographics
+          </h3>
+          <div className="space-y-2">
+            <LayerToggle
+              label="Average Age"
+              checked={activeLayers.age}
+              onChange={() => onToggleLayer('age')}
+            />
+            <LayerToggle
+              label="Population Density"
+              checked={activeLayers.populationDensity}
+              onChange={() => onToggleLayer('populationDensity')}
+            />
+          </div>
+        </div>
+
         {/* Events & Activities Section */}
         <div className="mb-8">
           <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
