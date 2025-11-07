@@ -3,8 +3,8 @@ import { Zap, Calendar, TrendingUp } from 'lucide-react';
 
 const RightSidebar = ({ constituency, events, mapBounds, demographicData, activeLayers }) => {
   const [stats, setStats] = useState({
-    population: 87432,
-    voters: 64821,
+    population: 0,
+    voters: 0,
     turnout: 72,
     medianIncome: 32400,
   });
@@ -15,28 +15,30 @@ const RightSidebar = ({ constituency, events, mapBounds, demographicData, active
     sentiment: '',
   });
 
-  // Update statistics when map bounds change
+  // Update statistics when constituency data changes
   useEffect(() => {
-    if (mapBounds && constituency.wards) {
-      // Filter wards that are visible in current bounds
-      const visibleWards = constituency.wards.filter(ward => {
-        const center = calculateWardCenter(ward.boundary);
-        return mapBounds.contains(center);
+    if (constituency && constituency.wards) {
+      // Calculate total population from all wards
+      const totalPop = constituency.wards.reduce((sum, ward) => {
+        return sum + (ward.demographics?.population || 0);
+      }, 0);
+
+      // Calculate registered voters (population aged 16+)
+      // Total population - population aged 0-15
+      const population0to15 = constituency.wards.reduce((sum, ward) => {
+        return sum + (ward.demographics?.population0to15 || 0);
+      }, 0);
+
+      const totalVoters = totalPop - population0to15;
+
+      setStats({
+        population: totalPop,
+        voters: totalVoters,
+        turnout: 72, // Keep static for now
+        medianIncome: 32400, // Keep static for now
       });
-
-      if (visibleWards.length > 0) {
-        const totalPop = visibleWards.reduce((sum, ward) => sum + ward.population, 0);
-        const totalVoters = visibleWards.reduce((sum, ward) => sum + ward.voters, 0);
-
-        setStats({
-          population: totalPop,
-          voters: totalVoters,
-          turnout: Math.round((totalVoters / totalPop) * 100),
-          medianIncome: calculateAverageIncome(visibleWards, demographicData.income),
-        });
-      }
     }
-  }, [mapBounds, constituency, demographicData]);
+  }, [constituency]);
 
   // Update insights based on visible events
   useEffect(() => {
