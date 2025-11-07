@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
-import InteractiveMap from './components/InteractiveMap';
+import MapDashboard from './components/MapDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Import data
@@ -128,14 +128,7 @@ function App() {
 
         <main className="flex-1 relative">
           {loading && <LoadingSpinner />}
-          <InteractiveMap
-            constituency={constituency}
-            wards={wards}
-            events={visibleEvents}
-            activeLayers={activeLayers}
-            demographicData={demographicData}
-            onBoundsChange={handleMapBoundsChange}
-          />
+          <MapDashboard />
         </main>
 
         <RightSidebar
