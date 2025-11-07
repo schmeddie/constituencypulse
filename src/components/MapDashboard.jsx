@@ -753,7 +753,12 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
                         } / 10`
                       )}
                     </div>
-                    {activeDemographic !== 'age' && activeDemographic !== 'populationDensity' && (
+                    {activeDemographic !== 'age' &&
+                     activeDemographic !== 'populationDensity' &&
+                     activeDemographic !== 'ethnicityAsian' &&
+                     activeDemographic !== 'ethnicityBlack' &&
+                     activeDemographic !== 'ethnicityMixed' &&
+                     activeDemographic !== 'ethnicityWhite' && (
                       <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
                         (1 = most deprived, 10 = least deprived)
                       </div>
