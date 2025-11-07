@@ -62,11 +62,83 @@ function bngToLatLng(easting, northing) {
   lat = lat - VII * dE2 + VIII * dE4 - IX * dE6;
   let lon = lon0 + X * dE - XI * dE3 + XII * dE5 - XIIA * dE7;
 
-  // Convert to degrees
+  // Convert to degrees (still in OSGB36 datum)
   lat = lat * 180 / Math.PI;
   lon = lon * 180 / Math.PI;
 
-  return [lat, lon];
+  // Apply Helmert transformation to convert from OSGB36 datum to WGS84 datum
+  const [wgs84Lat, wgs84Lon] = osgb36ToWgs84(lat, lon);
+
+  return [wgs84Lat, wgs84Lon];
+}
+
+// Helmert transformation from OSGB36 to WGS84
+function osgb36ToWgs84(lat, lon) {
+  // Convert lat/lon back to radians for transformation
+  const latRad = lat * Math.PI / 180;
+  const lonRad = lon * Math.PI / 180;
+
+  // OSGB36 ellipsoid parameters
+  const a_osgb = 6377563.396;
+  const b_osgb = 6356256.909;
+  const e2_osgb = 1 - (b_osgb * b_osgb) / (a_osgb * a_osgb);
+
+  // Convert OSGB36 lat/lon to OSGB36 cartesian coordinates
+  const sinLat = Math.sin(latRad);
+  const cosLat = Math.cos(latRad);
+  const sinLon = Math.sin(lonRad);
+  const cosLon = Math.cos(lonRad);
+
+  const nu = a_osgb / Math.sqrt(1 - e2_osgb * sinLat * sinLat);
+  const h = 0; // Assume height above ellipsoid is 0
+
+  const x1 = (nu + h) * cosLat * cosLon;
+  const y1 = (nu + h) * cosLat * sinLon;
+  const z1 = ((1 - e2_osgb) * nu + h) * sinLat;
+
+  // Helmert transformation parameters (OSGB36 to WGS84)
+  const tx = -446.448;  // Translation in meters
+  const ty = 125.157;
+  const tz = -542.060;
+  const s = 20.4894;    // Scale factor in ppm
+  const rx = -0.1502;   // Rotation in arcseconds
+  const ry = -0.2470;
+  const rz = -0.8421;
+
+  // Convert rotations from arcseconds to radians
+  const rxRad = rx * Math.PI / (180 * 3600);
+  const ryRad = ry * Math.PI / (180 * 3600);
+  const rzRad = rz * Math.PI / (180 * 3600);
+  const sFactor = s * 1e-6; // Convert ppm to factor
+
+  // Apply Helmert transformation
+  const x2 = tx + (1 + sFactor) * (x1 + (-rxRad) * y1 + ryRad * z1);
+  const y2 = ty + (1 + sFactor) * (rxRad * x1 + y1 + (-rzRad) * z1);
+  const z2 = tz + (1 + sFactor) * ((-ryRad) * x1 + rzRad * y1 + z1);
+
+  // WGS84 ellipsoid parameters
+  const a_wgs84 = 6378137.0;
+  const b_wgs84 = 6356752.314245;
+  const e2_wgs84 = 1 - (b_wgs84 * b_wgs84) / (a_wgs84 * a_wgs84);
+
+  // Convert WGS84 cartesian back to lat/lon
+  const p = Math.sqrt(x2 * x2 + y2 * y2);
+  let latWgs84 = Math.atan2(z2, p * (1 - e2_wgs84));
+
+  // Iterate to refine latitude
+  for (let i = 0; i < 10; i++) {
+    const sinLatWgs84 = Math.sin(latWgs84);
+    const nuWgs84 = a_wgs84 / Math.sqrt(1 - e2_wgs84 * sinLatWgs84 * sinLatWgs84);
+    latWgs84 = Math.atan2(z2 + e2_wgs84 * nuWgs84 * sinLatWgs84, p);
+  }
+
+  const lonWgs84 = Math.atan2(y2, x2);
+
+  // Convert back to degrees
+  const latDeg = latWgs84 * 180 / Math.PI;
+  const lonDeg = lonWgs84 * 180 / Math.PI;
+
+  return [latDeg, lonDeg];
 }
 
 // Read the BNG coordinates and convert
