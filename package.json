@@ -1,0 +1,17 @@
+{
+  "name": "constituency-pulse",
+  "version": "1.0.0",
+  "description": "A data and mapping platform for Members of Parliament",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "government",
+    "constituency",
+    "mapping",
+    "dashboard"
+  ],
+  "author": "",
+  "license": "MIT"
+}

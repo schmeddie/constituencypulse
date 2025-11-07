@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constituency Pulse - MP Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">Constituency Pulse</h1>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search constituencies, events, or topics...">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </div>
+            <div class="profile-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar sidebar-left">
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">Data Layers</h2>
+
+                <div class="filter-group">
+                    <h3 class="filter-title">Demographics</h3>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="age">
+                        <span class="toggle-label">Age Distribution</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="income">
+                        <span class="toggle-label">Income Levels</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="education">
+                        <span class="toggle-label">Education</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="employment">
+                        <span class="toggle-label">Employment</span>
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <h3 class="filter-title">Events & Activities</h3>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="events" checked>
+                        <span class="toggle-label">Local Events</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="community">
+                        <span class="toggle-label">Community Meetings</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="town-halls">
+                        <span class="toggle-label">Town Halls</span>
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <h3 class="filter-title">Political Data</h3>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="voting">
+                        <span class="toggle-label">Voting Intention</span>
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" class="toggle-checkbox" data-layer="turnout">
+                        <span class="toggle-label">Voter Turnout</span>
+                    </label>
+                </div>
+
+                <div class="filter-group">
+                    <h3 class="filter-title">Event Categories</h3>
+                    <div class="category-filters">
+                        <button class="category-btn active" data-category="all">All</button>
+                        <button class="category-btn" data-category="healthcare">Healthcare</button>
+                        <button class="category-btn" data-category="education">Education</button>
+                        <button class="category-btn" data-category="transport">Transport</button>
+                        <button class="category-btn" data-category="housing">Housing</button>
+                        <button class="category-btn" data-category="environment">Environment</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map Container -->
+        <main class="map-container">
+            <div id="map"></div>
+            <div class="map-legend">
+                <h4>Legend</h4>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #3b82f6;"></span>
+                    <span>Healthcare Events</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #10b981;"></span>
+                    <span>Education Events</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #f59e0b;"></span>
+                    <span>Transport Events</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #8b5cf6;"></span>
+                    <span>Housing Events</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #22c55e;"></span>
+                    <span>Environment Events</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar sidebar-right">
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">Constituency Overview</h2>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">87,432</div>
+                        <div class="stat-label">Total Population</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">64,821</div>
+                        <div class="stat-label">Registered Voters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">72%</div>
+                        <div class="stat-label">Turnout (2024)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">£32,400</div>
+                        <div class="stat-label">Median Income</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h2 class="sidebar-title">AI Insights</h2>
+
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Top Issues in This Area</h4>
+                        <ul class="insight-list">
+                            <li><strong>Healthcare Access</strong> - 42% of conversations mention NHS waiting times</li>
+                            <li><strong>Public Transport</strong> - Increased demand for better rail connections</li>
+                            <li><strong>Housing Costs</strong> - Rising concerns about affordability</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Upcoming Community Events</h4>
+                        <div class="event-list">
+                            <div class="event-item">
+                                <div class="event-date">Nov 12</div>
+                                <div class="event-details">
+                                    <div class="event-name">Healthcare Town Hall</div>
+                                    <div class="event-location">St. Mary's Community Centre</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-date">Nov 15</div>
+                                <div class="event-details">
+                                    <div class="event-name">Education Forum</div>
+                                    <div class="event-location">Central Library</div>
+                                </div>
+                            </div>
+                            <div class="event-item">
+                                <div class="event-date">Nov 18</div>
+                                <div class="event-details">
+                                    <div class="event-name">Transport Consultation</div>
+                                    <div class="event-location">Town Hall</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </div>
+                    <div class="insight-content">
+                        <h4>Recent Sentiment Shift</h4>
+                        <p>Positive sentiment toward local education initiatives has increased by <strong>+18%</strong> in the past month, following the announcement of new school funding.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
