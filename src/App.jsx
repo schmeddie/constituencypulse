@@ -5,6 +5,8 @@ import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import MapDashboard from './components/MapDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
+import CorrelationFinder from './components/CorrelationFinder';
+import { analyzeCorrelation } from './utils/correlationAnalysis';
 
 // Import demographic data (same across all constituencies)
 import ageData from './data/demographics/age.json';
@@ -41,6 +43,11 @@ function App() {
     education: educationData,
     employment: employmentData,
   });
+
+  // Correlation finder state
+  const [isCorrelationFinderOpen, setIsCorrelationFinderOpen] = useState(false);
+  const [correlationResults, setCorrelationResults] = useState(null);
+  const [savedViewState, setSavedViewState] = useState(null);
 
   // Load constituency data when selected
   const handleSelectConstituency = async (constituencyInfo) => {
@@ -184,6 +191,49 @@ function App() {
     setVisibleEvents(searchResults);
   };
 
+  // Handler for opening correlation finder
+  const handleFindCorrelation = () => {
+    setIsCorrelationFinderOpen(true);
+  };
+
+  // Handler for analyzing correlation
+  const handleAnalyzeCorrelation = async (params) => {
+    setIsCorrelationFinderOpen(false);
+    setLoading(true);
+
+    try {
+      // Perform correlation analysis
+      const results = await analyzeCorrelation(
+        params.metric1,
+        params.metric2,
+        params.correlationType
+      );
+
+      if (results) {
+        // Save current view state (will be set by MapDashboard)
+        setSavedViewState({
+          constituencyData,
+          constituency,
+        });
+
+        setCorrelationResults(results);
+      } else {
+        alert('Could not load England wards data. Please ensure england-wards.json is in public/data/');
+      }
+    } catch (error) {
+      console.error('Error analyzing correlation:', error);
+      alert('Error analyzing correlation. See console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler for closing correlation results
+  const handleCloseCorrelation = () => {
+    setCorrelationResults(null);
+    // Restore saved view state will be handled by MapDashboard
+  };
+
   // Show start screen if no constituency selected
   if (!selectedConstituency) {
     return <StartScreen onSelectConstituency={handleSelectConstituency} />;
@@ -214,6 +264,7 @@ function App() {
           activeCategory={activeCategory}
           onToggleLayer={toggleLayer}
           onCategoryChange={handleCategoryChange}
+          onFindCorrelation={handleFindCorrelation}
         />
 
         <main className="flex-1 relative">
@@ -222,6 +273,8 @@ function App() {
             activeLayers={activeLayers}
             visibleEvents={visibleEvents}
             constituencyData={constituencyData}
+            correlationResults={correlationResults}
+            onCloseCorrelation={handleCloseCorrelation}
           />
         </main>
 
@@ -233,6 +286,13 @@ function App() {
           activeLayers={activeLayers}
         />
       </div>
+
+      {/* Correlation Finder Modal */}
+      <CorrelationFinder
+        isOpen={isCorrelationFinderOpen}
+        onClose={() => setIsCorrelationFinderOpen(false)}
+        onAnalyze={handleAnalyzeCorrelation}
+      />
     </div>
   );
 }

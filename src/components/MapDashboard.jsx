@@ -62,7 +62,14 @@ const getColorForEthnicity = (percent) => {
   return '#ca8a04'; // Very high - dark gold
 };
 
-const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
+// Helper: Get color for correlation results
+const getColorForCorrelation = (result) => {
+  if (result === 'supports') return 'rgba(34, 197, 94, 0.7)'; // Green - supports correlation
+  if (result === 'contradicts') return 'rgba(239, 68, 68, 0.7)'; // Red - contradicts correlation
+  return 'rgba(156, 163, 175, 0.5)'; // Grey - no data/unclear
+};
+
+const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlationResults, onCloseCorrelation }) => {
   const mapRef = useRef();
   const [hoveredWardId, setHoveredWardId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -323,6 +330,55 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
     };
   }, [constituencyData, activeLayers]);
 
+  // Create GeoJSON for correlation results (all England wards)
+  const correlationWardsGeoJSON = useMemo(() => {
+    if (!correlationResults || !correlationResults.wards) {
+      return {
+        type: 'FeatureCollection',
+        features: []
+      };
+    }
+
+    const features = correlationResults.wards.map((ward, index) => {
+      const fillColor = getColorForCorrelation(ward.correlationResult);
+
+      return {
+        type: 'Feature',
+        id: ward.id || index,
+        properties: {
+          ...ward.properties,
+          fillColor: fillColor,
+          correlationResult: ward.correlationResult,
+        },
+        geometry: ward.geometry
+      };
+    });
+
+    return {
+      type: 'FeatureCollection',
+      features: features
+    };
+  }, [correlationResults]);
+
+  // Update view state when switching to/from correlation mode
+  useEffect(() => {
+    if (correlationResults) {
+      // Zoom out to show all of England
+      setViewState({
+        longitude: -1.5, // Center of England
+        latitude: 52.8,
+        zoom: 6
+      });
+    } else if (constituencyData?.constituency?.center) {
+      // Return to constituency view
+      setViewState({
+        longitude: constituencyData.constituency.center[1],
+        latitude: constituencyData.constituency.center[0],
+        zoom: constituencyData.constituency.zoom || 11
+      });
+    }
+  }, [correlationResults, constituencyData]);
+
   // Convert events to GeoJSON (only if events layer is active)
   const eventsGeoJSON = useMemo(() => {
     if (!activeLayers?.events || !visibleEvents) {
@@ -546,8 +602,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
           />
         </Source>
 
-        {/* Ward Boundaries with Demographics */}
-        {wardsGeoJSON.features.length > 0 && (
+        {/* Ward Boundaries with Demographics (normal mode) */}
+        {!correlationResults && wardsGeoJSON.features.length > 0 && (
           <Source
             id="wards"
             type="geojson"
@@ -585,6 +641,35 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
                   2,
                   1
                 ]
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Correlation Wards (all England - correlation mode) */}
+        {correlationResults && correlationWardsGeoJSON.features.length > 0 && (
+          <Source
+            id="correlation-wards"
+            type="geojson"
+            data={correlationWardsGeoJSON}
+          >
+            {/* Fill layer with correlation colors */}
+            <Layer
+              id="correlation-wards-fill"
+              type="fill"
+              paint={{
+                'fill-color': ['get', 'fillColor'],
+                'fill-opacity': 0.7
+              }}
+            />
+
+            {/* Ward borders */}
+            <Layer
+              id="correlation-wards-line"
+              type="line"
+              paint={{
+                'line-color': '#333333',
+                'line-width': 0.5
               }}
             />
           </Source>
@@ -782,8 +867,75 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
         )}
       </Map>
 
+      {/* Correlation Results Overlay */}
+      {correlationResults && (
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(255, 255, 255, 0.98)',
+          padding: '20px 30px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+          fontSize: '14px',
+          fontFamily: 'Inter, sans-serif',
+          minWidth: '400px',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontWeight: 700, fontSize: '18px', color: '#1f2937', marginBottom: '12px' }}>
+            Correlation Analysis
+          </div>
+          <div style={{ color: '#6b7280', marginBottom: '16px', fontSize: '13px' }}>
+            {correlationResults.metric1} vs {correlationResults.metric2} ({correlationResults.correlationType} correlation)
+          </div>
+
+          <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '16px' }}>
+            <div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e' }}>
+                {correlationResults.statistics.supports.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#6b7280' }}>Supports</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444' }}>
+                {correlationResults.statistics.contradicts.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#6b7280' }}>Contradicts</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#9ca3af' }}>
+                {correlationResults.statistics.noData.toLocaleString()}
+              </div>
+              <div style={{ fontSize: '11px', color: '#6b7280' }}>No Data</div>
+            </div>
+          </div>
+
+          <div style={{ fontSize: '12px', color: '#4b5563', marginBottom: '16px', lineHeight: '1.5' }}>
+            {correlationResults.statistics.supports} wards ({correlationResults.statistics.supportsPercent}%) show a {correlationResults.correlationType} correlation
+            between {correlationResults.metric1} and {correlationResults.metric2}, while {correlationResults.statistics.contradicts} wards ({correlationResults.statistics.contradictsPercent}%) do not.
+          </div>
+
+          <button
+            onClick={onCloseCorrelation}
+            style={{
+              padding: '8px 24px',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '14px'
+            }}
+          >
+            Return to Constituency
+          </button>
+        </div>
+      )}
+
       {/* Legend overlay */}
-      {activeDemographic && (
+      {!correlationResults && activeDemographic && (
         <div style={{
           position: 'absolute',
           bottom: '30px',

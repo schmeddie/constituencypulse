@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange }) => {
+const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
@@ -53,6 +53,14 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
     <aside className="w-72 bg-white border-r border-border-grey shadow-md flex flex-col">
       <div className="p-6 overflow-y-auto flex-1">
         <h2 className="text-lg font-semibold mb-5 text-dark-grey">Data Layers</h2>
+
+        {/* Find Correlation Button */}
+        <button
+          onClick={onFindCorrelation}
+          className="w-full mb-6 px-4 py-3 bg-primary-blue text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-sm"
+        >
+          Find Correlation
+        </button>
 
         {/* Deprivation Indices Section */}
         <div className="mb-8">
