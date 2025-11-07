@@ -31,7 +31,7 @@ function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [loading, setLoading] = useState(false);
   const [mapBounds, setMapBounds] = useState(null);
-  const [visibleEvents, setVisibleEvents] = useState(eventsData);
+  const [visibleEvents, setVisibleEvents] = useState(bexhillBattleData.events);
   const [demographicData, setDemographicData] = useState({
     age: ageData,
     income: incomeData,
