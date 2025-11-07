@@ -150,7 +150,15 @@ async function matchWardsFromCSV() {
     trim: true
   });
 
-  console.log(`Found ${records.length} ward-constituency mappings\n`);
+  console.log(`Found ${records.length} ward-constituency mappings`);
+
+  // Debug: Show what columns were actually parsed
+  if (records.length > 0) {
+    const columns = Object.keys(records[0]);
+    console.log(`CSV columns found: ${columns.join(', ')}`);
+    console.log(`First record sample:`, records[0]);
+    console.log();
+  }
 
   // Build mapping: wardCode -> [constituencyCode1, constituencyCode2, ...]
   // Some wards span multiple constituencies
