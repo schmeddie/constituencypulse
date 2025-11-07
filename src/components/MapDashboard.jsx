@@ -54,20 +54,47 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
   const [hoveredWardId, setHoveredWardId] = useState(null);
 
   // Convert constituency boundary to GeoJSON
-  const constituencyGeoJSON = useMemo(() => ({
-    type: 'FeatureCollection',
-    features: [{
-      type: 'Feature',
-      id: bexhillBattleData.constituency.id,
-      properties: {
-        name: bexhillBattleData.constituency.name
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [convertBoundaryToGeoJSON(bexhillBattleData.constituency.boundary)]
-      }
-    }]
-  }), []);
+  const constituencyGeoJSON = useMemo(() => {
+    // Check if we have multiPolygon boundary (real data) or simple boundary (mock data)
+    if (bexhillBattleData.constituency.multiPolygonBoundary) {
+      // Real boundary data - already in correct [lat, lng] format
+      return {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          id: bexhillBattleData.constituency.id,
+          properties: {
+            name: bexhillBattleData.constituency.name
+          },
+          geometry: {
+            type: 'MultiPolygon',
+            // Convert [lat, lng] to [lng, lat] for GeoJSON
+            coordinates: bexhillBattleData.constituency.multiPolygonBoundary.map(polygon =>
+              polygon.map(ring =>
+                ring.map(coord => [coord[1], coord[0]])
+              )
+            )
+          }
+        }]
+      };
+    } else {
+      // Fallback to simple boundary (mock data)
+      return {
+        type: 'FeatureCollection',
+        features: [{
+          type: 'Feature',
+          id: bexhillBattleData.constituency.id,
+          properties: {
+            name: bexhillBattleData.constituency.name
+          },
+          geometry: {
+            type: 'Polygon',
+            coordinates: [convertBoundaryToGeoJSON(bexhillBattleData.constituency.boundary)]
+          }
+        }]
+      };
+    }
+  }, []);
 
   // Convert wards to GeoJSON with demographic data
   const wardsGeoJSON = useMemo(() => {
