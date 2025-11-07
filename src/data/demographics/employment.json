@@ -1,0 +1,81 @@
+{
+  "layerName": "Employment Status",
+  "description": "Employment statistics by ward",
+  "wards": [
+    {
+      "wardId": 1,
+      "wardName": "Loughborough Central",
+      "data": {
+        "employed": 68.4,
+        "selfEmployed": 8.2,
+        "unemployed": 5.8,
+        "student": 14.3,
+        "retired": 3.3
+      },
+      "unemploymentRate": 5.8,
+      "economicallyActive": 91.2,
+      "color": "#8b5cf6",
+      "intensity": 0.75
+    },
+    {
+      "wardId": 2,
+      "wardName": "Shepshed",
+      "data": {
+        "employed": 71.2,
+        "selfEmployed": 10.8,
+        "unemployed": 4.2,
+        "student": 2.1,
+        "retired": 11.7
+      },
+      "unemploymentRate": 4.2,
+      "economicallyActive": 84.3,
+      "color": "#7c3aed",
+      "intensity": 0.85
+    },
+    {
+      "wardId": 3,
+      "wardName": "Quorn & Mountsorrel",
+      "data": {
+        "employed": 73.8,
+        "selfEmployed": 11.4,
+        "unemployed": 3.1,
+        "student": 1.8,
+        "retired": 9.9
+      },
+      "unemploymentRate": 3.1,
+      "economicallyActive": 87.0,
+      "color": "#6d28d9",
+      "intensity": 0.90
+    },
+    {
+      "wardId": 4,
+      "wardName": "Loughborough North",
+      "data": {
+        "employed": 69.7,
+        "selfEmployed": 7.9,
+        "unemployed": 5.2,
+        "student": 12.8,
+        "retired": 4.4
+      },
+      "unemploymentRate": 5.2,
+      "economicallyActive": 90.4,
+      "color": "#8b5cf6",
+      "intensity": 0.80
+    },
+    {
+      "wardId": 5,
+      "wardName": "Loughborough South",
+      "data": {
+        "employed": 72.1,
+        "selfEmployed": 9.3,
+        "unemployed": 4.6,
+        "student": 3.4,
+        "retired": 10.6
+      },
+      "unemploymentRate": 4.6,
+      "economicallyActive": 85.4,
+      "color": "#7c3aed",
+      "intensity": 0.85
+    }
+  ]
+}

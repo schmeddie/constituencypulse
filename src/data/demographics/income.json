@@ -1,0 +1,81 @@
+{
+  "layerName": "Income Levels",
+  "description": "Average household income by ward",
+  "wards": [
+    {
+      "wardId": 1,
+      "wardName": "Loughborough Central",
+      "medianIncome": 28400,
+      "avgIncome": 31200,
+      "brackets": {
+        "0-20k": 35.2,
+        "20-30k": 28.4,
+        "30-50k": 24.1,
+        "50-75k": 9.3,
+        "75k+": 3.0
+      },
+      "color": "#f59e0b",
+      "intensity": 0.50
+    },
+    {
+      "wardId": 2,
+      "wardName": "Shepshed",
+      "medianIncome": 32100,
+      "avgIncome": 35800,
+      "brackets": {
+        "0-20k": 28.1,
+        "20-30k": 31.2,
+        "30-50k": 27.8,
+        "50-75k": 10.4,
+        "75k+": 2.5
+      },
+      "color": "#f97316",
+      "intensity": 0.60
+    },
+    {
+      "wardId": 3,
+      "wardName": "Quorn & Mountsorrel",
+      "medianIncome": 38900,
+      "avgIncome": 42300,
+      "brackets": {
+        "0-20k": 18.7,
+        "20-30k": 26.4,
+        "30-50k": 35.2,
+        "50-75k": 15.8,
+        "75k+": 3.9
+      },
+      "color": "#ea580c",
+      "intensity": 0.75
+    },
+    {
+      "wardId": 4,
+      "wardName": "Loughborough North",
+      "medianIncome": 29800,
+      "avgIncome": 32900,
+      "brackets": {
+        "0-20k": 32.4,
+        "20-30k": 29.7,
+        "30-50k": 25.6,
+        "50-75k": 9.8,
+        "75k+": 2.5
+      },
+      "color": "#fb923c",
+      "intensity": 0.55
+    },
+    {
+      "wardId": 5,
+      "wardName": "Loughborough South",
+      "medianIncome": 34500,
+      "avgIncome": 37200,
+      "brackets": {
+        "0-20k": 24.3,
+        "20-30k": 30.1,
+        "30-50k": 30.4,
+        "50-75k": 12.2,
+        "75k+": 3.0
+      },
+      "color": "#f97316",
+      "intensity": 0.65
+    }
+  ]
+}

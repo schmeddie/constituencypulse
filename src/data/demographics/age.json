@@ -1,0 +1,76 @@
+{
+  "layerName": "Age Distribution",
+  "description": "Population age distribution across wards",
+  "wards": [
+    {
+      "wardId": 1,
+      "wardName": "Loughborough Central",
+      "data": {
+        "0-17": 18.5,
+        "18-24": 32.4,
+        "25-44": 28.3,
+        "45-64": 14.2,
+        "65+": 6.6
+      },
+      "avgAge": 31.2,
+      "color": "#60a5fa",
+      "intensity": 0.85
+    },
+    {
+      "wardId": 2,
+      "wardName": "Shepshed",
+      "data": {
+        "0-17": 22.1,
+        "18-24": 8.9,
+        "25-44": 31.5,
+        "45-64": 25.8,
+        "65+": 11.7
+      },
+      "avgAge": 38.7,
+      "color": "#3b82f6",
+      "intensity": 0.65
+    },
+    {
+      "wardId": 3,
+      "wardName": "Quorn & Mountsorrel",
+      "data": {
+        "0-17": 19.8,
+        "18-24": 7.2,
+        "25-44": 29.4,
+        "45-64": 28.1,
+        "65+": 15.5
+      },
+      "avgAge": 41.3,
+      "color": "#2563eb",
+      "intensity": 0.55
+    },
+    {
+      "wardId": 4,
+      "wardName": "Loughborough North",
+      "data": {
+        "0-17": 20.3,
+        "18-24": 28.7,
+        "25-44": 26.9,
+        "45-64": 17.4,
+        "65+": 6.7
+      },
+      "avgAge": 32.8,
+      "color": "#60a5fa",
+      "intensity": 0.80
+    },
+    {
+      "wardId": 5,
+      "wardName": "Loughborough South",
+      "data": {
+        "0-17": 21.5,
+        "18-24": 9.8,
+        "25-44": 33.2,
+        "45-64": 23.9,
+        "65+": 11.6
+      },
+      "avgAge": 37.1,
+      "color": "#3b82f6",
+      "intensity": 0.70
+    }
+  ]
+}

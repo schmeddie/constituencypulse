@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "name": "NHS Waiting Times Forum",
+    "category": "healthcare",
+    "lat": 52.7584,
+    "lng": -1.2148,
+    "date": "2025-11-12T18:00:00",
+    "location": "St. Mary's Community Centre",
+    "summary": "Community discussion on improving local healthcare access and reducing waiting times at Leicester Royal Infirmary.",
+    "attendees": 120,
+    "color": "#3b82f6"
+  },
+  {
+    "id": 2,
+    "name": "School Funding Town Hall",
+    "category": "education",
+    "lat": 52.7484,
+    "lng": -1.1948,
+    "date": "2025-11-15T19:00:00",
+    "location": "Central Library",
+    "summary": "Public consultation on the allocation of new education funding for local primary and secondary schools.",
+    "attendees": 85,
+    "color": "#10b981"
+  },
+  {
+    "id": 3,
+    "name": "Railway Connectivity Meeting",
+    "category": "transport",
+    "lat": 52.7384,
+    "lng": -1.2248,
+    "date": "2025-11-18T18:30:00",
+    "location": "Town Hall",
+    "summary": "Discussion on proposed improvements to Loughborough railway station and increased service frequency.",
+    "attendees": 65,
+    "color": "#f59e0b"
+  },
+  {
+    "id": 4,
+    "name": "Affordable Housing Initiative",
+    "category": "housing",
+    "lat": 52.7284,
+    "lng": -1.2048,
+    "date": "2025-11-20T17:30:00",
+    "location": "Community Centre",
+    "summary": "Presentation of new affordable housing development plans and community feedback session.",
+    "attendees": 95,
+    "color": "#8b5cf6"
+  },
+  {
+    "id": 5,
+    "name": "Green Spaces Consultation",
+    "category": "environment",
+    "lat": 52.7184,
+    "lng": -1.1848,
+    "date": "2025-11-22T18:00:00",
+    "location": "Loughborough Park",
+    "summary": "Planning meeting for new park developments and conservation of existing green spaces.",
+    "attendees": 75,
+    "color": "#22c55e"
+  },
+  {
+    "id": 6,
+    "name": "GP Surgery Expansion",
+    "category": "healthcare",
+    "lat": 52.7584,
+    "lng": -1.2648,
+    "date": "2025-11-25T17:00:00",
+    "location": "Shepshed Medical Centre",
+    "summary": "Community update on the expansion of local GP services in Shepshed area.",
+    "attendees": 55,
+    "color": "#3b82f6"
+  },
+  {
+    "id": 7,
+    "name": "Adult Education Workshop",
+    "category": "education",
+    "lat": 52.7384,
+    "lng": -1.1648,
+    "date": "2025-11-28T18:00:00",
+    "location": "Loughborough College",
+    "summary": "Launch of new adult education and skills training programs at Loughborough College.",
+    "attendees": 40,
+    "color": "#10b981"
+  },
+  {
+    "id": 8,
+    "name": "Cycling Infrastructure Forum",
+    "category": "transport",
+    "lat": 52.7284,
+    "lng": -1.1948,
+    "date": "2025-12-01T18:30:00",
+    "location": "Town Hall",
+    "summary": "Discussion on proposed cycle lanes and improved cycling infrastructure across the constituency.",
+    "attendees": 50,
+    "color": "#f59e0b"
+  },
+  {
+    "id": 9,
+    "name": "Social Housing Review",
+    "category": "housing",
+    "lat": 52.7484,
+    "lng": -1.2148,
+    "date": "2025-12-03T19:00:00",
+    "location": "Council Offices",
+    "summary": "Review of social housing allocations and waiting list management strategies.",
+    "attendees": 70,
+    "color": "#8b5cf6"
+  },
+  {
+    "id": 10,
+    "name": "Climate Action Workshop",
+    "category": "environment",
+    "lat": 52.7384,
+    "lng": -1.1848,
+    "date": "2025-12-05T18:00:00",
+    "location": "Environmental Centre",
+    "summary": "Community workshop on local climate action initiatives and carbon reduction targets.",
+    "attendees": 60,
+    "color": "#22c55e"
+  }
+]

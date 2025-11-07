@@ -1,183 +1,122 @@
 # Constituency Pulse
 
-A modern, responsive data and mapping platform designed for Members of Parliament to visualize and interact with constituency information, events, and demographic data.
+A fully functional, responsive data and mapping platform designed for Members of Parliament to visualize and interact with constituency information, events, and demographic data. Built with React, TailwindCSS, and Leaflet.js.
 
-## Features
+## ✨ Features
 
-### Interactive Map
-- **Constituency Boundaries**: Visual representation of constituency boundaries with soft blue styling
+### 🗺️ Interactive Map
+- **Pan, Zoom, and Navigate**: Fully interactive Leaflet.js map with smooth controls
+- **Constituency Boundaries**: Visual representation with soft blue styling
+- **Ward-Level Data**: Click on individual wards to see detailed demographics
 - **Town Markers**: Major towns displayed with population information
-- **Event Pins**: Color-coded event markers with hover cards showing detailed information
-- **Responsive Navigation**: Pan, zoom, and explore constituency data seamlessly
+- **Event Pins**: Color-coded event markers with interactive popups
+- **Dynamic Legend**: Updates based on active data layers
 
-### Left Sidebar - Data Layers & Filters
-- **Demographics Toggle**: Age distribution, income levels, education, and employment data
-- **Events & Activities**: Local events, community meetings, and town halls
+### 📊 Data Layer Toggling
+- **Demographics**: Age distribution, income levels, education, and employment
 - **Political Data**: Voting intention and voter turnout visualization
-- **Category Filters**: Quick filter events by healthcare, education, transport, housing, and environment
+- **Events & Activities**: Local events, community meetings, and town halls
+- **Color-Coded Overlays**: Ward shading updates in real-time based on selected data
+- **Smooth Transitions**: Loading animations when switching datasets
 
-### Right Sidebar - Analytics & Insights
-- **Summary Statistics**:
-  - Total population
-  - Registered voters
-  - Voter turnout
-  - Median income
-- **AI-Generated Insights**:
-  - Top issues in the area
-  - Upcoming community events
-  - Sentiment analysis and trends
+### 📍 Event Management
+- **10 Sample Events**: Healthcare, education, transport, housing, and environment
+- **Rich Popups**: Click events to see detailed information
+- **Category Filtering**: Filter events by type
+- **Search Functionality**: Search events by name, category, or keywords
 
-### Header
-- **Search Functionality**: Search constituencies, events, and topics
-- **Clean Branding**: Professional "Constituency Pulse" logo
-- **Profile Access**: Quick access to user profile
+### 📈 Dynamic Insights
+- **Real-Time Statistics**: Updates based on visible map area
+- **AI-Generated Insights**: Top issues and upcoming events
+- **Adaptive Content**: Right sidebar updates dynamically
 
-## Design Philosophy
-
-The dashboard follows a modern, minimalist design aesthetic suitable for official government use:
-
-- **Color Palette**: Soft blues (#3b82f6, #60a5fa) and greys (#1f2937, #6b7280, #f3f4f6)
-- **Typography**: Inter font family for clean, professional readability
-- **Shadows**: Subtle shadows for depth without distraction
-- **Responsive**: Fully responsive design that works on desktop, tablet, and mobile devices
-
-## Technology Stack
-
-- **HTML5**: Semantic structure
-- **CSS3**: Modern styling with CSS Grid and Flexbox
-- **JavaScript (Vanilla)**: No heavy frameworks for optimal performance
-- **Leaflet.js**: Interactive mapping library
-- **OpenStreetMap**: Map tile provider
-
-## Getting Started
-
-### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, Edge)
-- Node.js (optional, for local development server)
+## 🚀 Getting Started
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd constituencypulse
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-2. Open the application:
+Open your browser to `http://localhost:5173`
 
-**Option A: Direct File Access**
-Simply open `index.html` in your web browser.
-
-**Option B: Local Server**
-```bash
-npm start
-```
-Then navigate to `http://localhost:3000`
-
-### File Structure
+## 📁 Project Structure
 
 ```
 constituencypulse/
-├── index.html          # Main HTML structure
-├── styles.css          # All styling and responsive design
-├── app.js             # Application logic and interactivity
-├── package.json       # Project metadata
-└── README.md          # Documentation
+├── src/
+│   ├── components/           # React components
+│   ├── data/                 # JSON data files
+│   ├── App.jsx              # Main app
+│   └── index.css            # Tailwind styles
+├── index.html
+├── tailwind.config.js
+└── package.json
 ```
 
-## Usage
+## 🛠️ Technology Stack
 
-### Filtering Events
-1. Use the left sidebar to toggle different data layers on/off
-2. Click category buttons to filter events by type (Healthcare, Education, etc.)
-3. Hover over map pins to see event details
+- **React 19**: Modern React with hooks
+- **Vite**: Lightning-fast build tool
+- **TailwindCSS 4**: Utility-first CSS framework
+- **Leaflet.js 1.9**: Interactive mapping library
+- **React-Leaflet 5**: React bindings for Leaflet
+- **Lucide React**: Icon set
 
-### Viewing Insights
-1. Check the right sidebar for real-time statistics
-2. Review AI-generated insights about constituency issues
-3. See upcoming community events calendar
+## 📊 Key Features
 
-### Search
-1. Use the search bar in the header to find specific events or topics
-2. The map will automatically pan to matching results
+### Interactive Map
+- Full pan/zoom functionality
+- Click on wards to see demographics
+- Click on event markers for detailed popups
+- Constituency boundary visualization
 
-## Customization
+### Dynamic Data Layers
+- Toggle demographics (age, income, education, employment)
+- Ward overlays change color based on data
+- Real-time legend updates
 
-### Adding New Events
-Edit the `eventsData` array in `app.js`:
+### Smart Filtering
+- Filter events by category (Healthcare, Education, Transport, Housing, Environment)
+- Search across event names and descriptions
+- Map bounds automatically filter visible events
 
-```javascript
-{
-    id: 9,
-    name: 'Your Event Name',
-    category: 'healthcare', // or education, transport, housing, environment
-    lat: 52.7684,
-    lng: -1.2048,
-    date: '2025-12-15',
-    summary: 'Event description',
-    color: '#3b82f6' // Hex color for the marker
-}
-```
+### Responsive Insights
+- Statistics update based on visible map area
+- Top issues calculated from event distribution
+- Upcoming events sorted chronologically
 
-### Changing Constituency Boundary
-Modify the `constituencyBoundary` array in `app.js` with your coordinates:
+## 🎨 Customization
 
-```javascript
-const constituencyBoundary = [
-    [lat1, lng1],
-    [lat2, lng2],
-    // ... more coordinates
-];
-```
+### Adding Events
+Edit `src/data/events.json`
 
-### Adding Towns
-Update the `majorTowns` array in `app.js`:
+### Changing Boundaries
+Edit `src/data/constituencies.json`
 
-```javascript
-{
-    name: 'Town Name',
-    lat: 52.7684,
-    lng: -1.2048,
-    population: 50000
-}
-```
+### Modifying Demographics
+Edit files in `src/data/demographics/`
 
-## Responsive Breakpoints
+## 📱 Responsive Design
 
-- **Desktop**: > 1200px (full three-column layout)
-- **Tablet**: 768px - 1200px (simplified sidebar)
-- **Mobile**: < 768px (stacked layout, hidden right sidebar)
+- Desktop: Full three-column layout
+- Tablet: Simplified layout
+- Mobile: Stacked components
 
-## Browser Support
+## 📄 License
 
-- Chrome/Edge (latest 2 versions)
-- Firefox (latest 2 versions)
-- Safari (latest 2 versions)
-
-## Future Enhancements
-
-- Real-time data integration with government APIs
-- Advanced demographic visualization layers
-- Export functionality for reports
-- User authentication and personalized dashboards
-- Mobile app companion
-- Integration with constituent relationship management (CRM) systems
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Contributing
-
-This is a demonstration project. For production use, please ensure compliance with:
-- Government Digital Service (GDS) design standards
-- Data protection regulations (GDPR, DPA 2018)
-- Accessibility standards (WCAG 2.1 AA)
-
-## Support
-
-For issues, questions, or suggestions, please open an issue in the repository.
+MIT License
 
 ---
 
-**Constituency Pulse** - Professional data visualization for parliamentary constituencies
+**Constituency Pulse** - Built with React, TailwindCSS, and Leaflet.js
