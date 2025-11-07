@@ -12,6 +12,7 @@ const CSV_PATH = process.argv[2] || './ward-constituency-mapping.csv';
 const WARDS_GEOJSON_PATH = process.argv[3] || './wards.geojson';
 const LSOA_DATA_PATH = process.argv[4]; // Optional: LSOA deprivation data CSV
 const LSOA_WARD_MAPPING_PATH = process.argv[5]; // Optional: LSOA to Ward mapping CSV
+const LSOA_POPULATION_PATH = process.argv[6]; // Optional: LSOA population/age data CSV
 
 // Output directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
@@ -34,11 +35,12 @@ const TEST_CONSTITUENCY_NAMES = [
 ];
 
 // Generate demographics from LSOA data or fall back to mock data
-function generateDemographics(wardCode, lsoaData) {
+function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
   // If no LSOA data provided, return mock data
   if (!lsoaData || !lsoaData.wardToLSOAs || !lsoaData.lsoaRankings) {
     return {
       population: 5000 + Math.floor(Math.random() * 10000),
+      averageAge: null,
       imdRank: null,
       imdDecile: null,
       incomeRank: null,
@@ -65,6 +67,7 @@ function generateDemographics(wardCode, lsoaData) {
     // No LSOAs found for this ward, return null values
     return {
       population: 8000, // Estimate
+      averageAge: null,
       imdRank: null,
       imdDecile: null,
       incomeRank: null,
@@ -83,6 +86,10 @@ function generateDemographics(wardCode, lsoaData) {
       environmentDecile: null
     };
   }
+
+  // Initialize totals for population and age
+  let totalPopulation = 0;
+  let totalWeightedAge = 0;
 
   // Calculate average ranks across all LSOAs in this ward
   const averages = {
@@ -126,6 +133,13 @@ function generateDemographics(wardCode, lsoaData) {
       averages.environmentDecile += lsoaRanking.environmentDecile || 0;
       count++;
     }
+
+    // Add population data if available
+    if (lsoaPopulationData && lsoaPopulationData[lsoaCode]) {
+      const popData = lsoaPopulationData[lsoaCode];
+      totalPopulation += popData.population;
+      totalWeightedAge += popData.averageAge * popData.population;
+    }
   }
 
   // Calculate averages and round to integers
@@ -135,8 +149,12 @@ function generateDemographics(wardCode, lsoaData) {
     }
   }
 
+  // Calculate average age (weighted by population)
+  const averageAge = totalPopulation > 0 ? Math.round(totalWeightedAge / totalPopulation) : null;
+
   return {
-    population: count * 1600, // Estimate: ~1600 people per LSOA on average
+    population: totalPopulation > 0 ? totalPopulation : count * 1600, // Use real data or estimate
+    averageAge: averageAge,
     lsoaCount: count,
     imdRank: averages.imdRank,
     imdDecile: averages.imdDecile,
@@ -253,6 +271,80 @@ function loadLSOAData() {
   };
 }
 
+// Load and process LSOA population/age data
+function loadLSOAPopulationData() {
+  if (!LSOA_POPULATION_PATH) {
+    console.log('LSOA population data file not provided - using estimated population\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_POPULATION_PATH)) {
+    console.warn(`Warning: LSOA population file not found: ${LSOA_POPULATION_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA population data from: ${LSOA_POPULATION_PATH}...`);
+
+  // Load LSOA population/age data
+  let popContent = fs.readFileSync(LSOA_POPULATION_PATH, 'utf8');
+  if (popContent.charCodeAt(0) === 0xFEFF) {
+    popContent = popContent.slice(1);
+  }
+  const popRecords = parse(popContent, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${popRecords.length} LSOA population records`);
+
+  // Build LSOA population map: lsoaCode -> { population, averageAge }
+  const lsoaPopulation = {};
+  for (const record of popRecords) {
+    const lsoaCode = record['LSOA 2021 Code'];
+    const total = parseInt(record['Total']) || 0;
+
+    if (lsoaCode && total > 0) {
+      // Parse age group populations
+      const f0to15 = parseInt(record['F0 to 15']) || 0;
+      const f16to29 = parseInt(record['F16 to 29']) || 0;
+      const f30to44 = parseInt(record['F30 to 44']) || 0;
+      const f45to64 = parseInt(record['F45 to 64']) || 0;
+      const f65plus = parseInt(record['F65 and over']) || 0;
+      const m0to15 = parseInt(record['M0 to 15']) || 0;
+      const m16to29 = parseInt(record['M16 to 29']) || 0;
+      const m30to44 = parseInt(record['M30 to 44']) || 0;
+      const m45to64 = parseInt(record['M45 to 64']) || 0;
+      const m65plus = parseInt(record['M65 and over']) || 0;
+
+      // Calculate weighted average age using midpoints of age ranges
+      // 0-15: midpoint = 7.5
+      // 16-29: midpoint = 22.5
+      // 30-44: midpoint = 37
+      // 45-64: midpoint = 54.5
+      // 65+: estimate = 75
+      const weightedAge =
+        (f0to15 + m0to15) * 7.5 +
+        (f16to29 + m16to29) * 22.5 +
+        (f30to44 + m30to44) * 37 +
+        (f45to64 + m45to64) * 54.5 +
+        (f65plus + m65plus) * 75;
+
+      const averageAge = total > 0 ? Math.round(weightedAge / total) : 0;
+
+      lsoaPopulation[lsoaCode] = {
+        population: total,
+        averageAge: averageAge
+      };
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaPopulation).length} LSOA population records\n`);
+
+  return lsoaPopulation;
+}
+
 // Generate events for wards
 function generateEventsForWards(wards) {
   const events = [];
@@ -335,6 +427,9 @@ async function matchWardsFromCSV() {
 
   // Load LSOA deprivation data (optional)
   const lsoaData = loadLSOAData();
+
+  // Load LSOA population/age data (optional)
+  const lsoaPopulationData = loadLSOAPopulationData();
 
   // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
@@ -529,7 +624,7 @@ async function matchWardsFromCSV() {
       name: wardName,
       boundary: boundary,
       center: center,
-      demographics: generateDemographics(wardCode, lsoaData)
+      demographics: generateDemographics(wardCode, lsoaData, lsoaPopulationData)
     };
 
     // Add multiPolygonBoundary if it's a MultiPolygon ward
