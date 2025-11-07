@@ -161,7 +161,11 @@ async function matchWardsFromCSV() {
     }
   }
 
-  console.log(`Unique wards in CSV: ${Object.keys(wardToConstituencies).length}\n`);
+  console.log(`Unique wards in CSV: ${Object.keys(wardToConstituencies).length}`);
+
+  // Show first 10 ward codes from CSV for debugging
+  const csvWardCodes = Object.keys(wardToConstituencies).slice(0, 10);
+  console.log(`First 10 ward codes in CSV: ${csvWardCodes.join(', ')}\n`);
 
   // Load wards GeoJSON
   console.log(`Loading wards: ${WARDS_GEOJSON_PATH}...`);
@@ -172,7 +176,13 @@ async function matchWardsFromCSV() {
   if (wardsGeoJSON.features.length > 0) {
     const sampleProps = wardsGeoJSON.features[0].properties;
     console.log(`Sample ward properties:`, Object.keys(sampleProps).join(', '));
-    console.log(`Sample ward code fields: reference=${sampleProps.reference}, entity=${sampleProps.entity}, WD23CD=${sampleProps.WD23CD}, WD24CD=${sampleProps.WD24CD}\n`);
+    console.log(`Sample ward code fields: reference=${sampleProps.reference}, entity=${sampleProps.entity}, WD23CD=${sampleProps.WD23CD}, WD24CD=${sampleProps.WD24CD}`);
+
+    // Show first 10 ward codes from GeoJSON
+    const geojsonWardCodes = wardsGeoJSON.features.slice(0, 10).map(f =>
+      f.properties.WD23CD || f.properties.WD24CD || f.properties.reference || f.properties.entity
+    );
+    console.log(`First 10 ward codes in GeoJSON: ${geojsonWardCodes.join(', ')}\n`);
   }
 
   // Load constituency files
