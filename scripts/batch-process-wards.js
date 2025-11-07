@@ -13,18 +13,18 @@ const WARDS_GEOJSON_PATH = process.argv[2] || './wards.geojson';
 // Check for test mode flag
 const TEST_MODE = process.argv.includes('--test');
 
-// Test constituencies to process (10 constituencies for quick testing)
-const TEST_CONSTITUENCIES = [
-  'E14001043', // South Holland and The Deepings
-  'E14000530', // Bexhill and Battle
-  'E14001088', // Leicester South
-  'E14000781', // Loughborough
-  'E14000555', // Birmingham Edgbaston
-  'E14000639', // Bristol West
-  'E14000810', // Manchester Central
-  'E14000803', // Liverpool Riverside
-  'E14000722', // Leeds Central
-  'E14000874'  // Norwich South
+// Test constituencies to process by NAME (10 constituencies for quick testing)
+const TEST_CONSTITUENCY_NAMES = [
+  'South Holland and The Deepings',
+  'Bexhill and Battle',
+  'Leicester South',
+  'Loughborough',
+  'Birmingham Edgbaston',
+  'Bristol West',
+  'Manchester Central',
+  'Liverpool Riverside',
+  'Leeds Central',
+  'Norwich South'
 ];
 
 // Constituency data directory
@@ -189,15 +189,9 @@ async function batchProcessWards() {
   let constituencyFiles = fs.readdirSync(CONSTITUENCIES_DIR)
     .filter(f => f.endsWith('.json') && f !== 'index.json' && f.startsWith('E14'));
 
-  // If test mode, only process test constituencies
-  if (TEST_MODE) {
-    const testFiles = TEST_CONSTITUENCIES.map(id => `${id}.json`);
-    constituencyFiles = constituencyFiles.filter(f => testFiles.includes(f));
-    console.log(`\n🧪 TEST MODE: Processing only ${constituencyFiles.length} constituencies\n`);
-  } else {
-    console.log(`Found ${constituencyFiles.length} English constituencies\n`);
-  }
+  console.log(`Found ${constituencyFiles.length} English constituency files\n`);
 
+  // If test mode, filter to only test constituencies by name
   const constituencies = {};
   for (const file of constituencyFiles) {
     const data = JSON.parse(
@@ -207,7 +201,22 @@ async function batchProcessWards() {
     // IMPORTANT: Clear existing placeholder wards
     data.wards = [];
 
-    constituencies[file] = data;
+    // In test mode, only include constituencies in the test list
+    if (TEST_MODE) {
+      if (TEST_CONSTITUENCY_NAMES.includes(data.constituency.name)) {
+        constituencies[file] = data;
+      }
+    } else {
+      constituencies[file] = data;
+    }
+  }
+
+  if (TEST_MODE) {
+    console.log(`\n🧪 TEST MODE: Processing only ${Object.keys(constituencies).length} constituencies:`);
+    Object.values(constituencies).forEach(c => console.log(`  - ${c.constituency.name}`));
+    console.log();
+  } else {
+    console.log(`Processing ${Object.keys(constituencies).length} English constituencies\n`);
   }
 
   // Process each ward and match to constituency
@@ -299,7 +308,7 @@ async function batchProcessWards() {
 
   console.log(`\n=== Processing Complete ===`);
   if (TEST_MODE) {
-    console.log(`🧪 TEST MODE - Only ${constituencyFiles.length} constituencies processed`);
+    console.log(`🧪 TEST MODE - Only ${Object.keys(constituencies).length} constituencies processed`);
   }
   console.log(`Wards matched: ${matched}`);
   console.log(`Wards unmatched: ${unmatched}`);
