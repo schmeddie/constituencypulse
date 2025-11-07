@@ -4,6 +4,7 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
 
   const categories = [
     { id: 'all', label: 'All', color: 'bg-primary-blue' },
@@ -15,11 +16,37 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
   ];
 
   const handleEthnicityMouseEnter = () => {
+    // Clear any pending close timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+
     if (ethnicityTriggerRef.current) {
       const rect = ethnicityTriggerRef.current.getBoundingClientRect();
       setSubmenuPosition({ top: rect.top });
       setExpandedSubmenu('ethnicity');
     }
+  };
+
+  const handleEthnicityMouseLeave = () => {
+    // Delay closing to allow moving to submenu
+    closeTimeoutRef.current = setTimeout(() => {
+      setExpandedSubmenu(null);
+    }, 150);
+  };
+
+  const handleSubmenuMouseEnter = () => {
+    // Clear any pending close timeout when entering submenu
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const handleSubmenuMouseLeave = () => {
+    // Close immediately when leaving submenu
+    setExpandedSubmenu(null);
   };
 
   return (
@@ -105,7 +132,7 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
               ref={ethnicityTriggerRef}
               className="relative overflow-visible"
               onMouseEnter={handleEthnicityMouseEnter}
-              onMouseLeave={() => setExpandedSubmenu(null)}
+              onMouseLeave={handleEthnicityMouseLeave}
             >
               <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
                 <span className="text-sm text-dark-grey select-none">Ethnicity Breakdown →</span>
@@ -115,8 +142,8 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
                 <div
                   className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
                   style={{top: `${submenuPosition.top}px`}}
-                  onMouseEnter={() => setExpandedSubmenu('ethnicity')}
-                  onMouseLeave={() => setExpandedSubmenu(null)}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
                 >
                   <LayerToggle
                     label="% Asian"
