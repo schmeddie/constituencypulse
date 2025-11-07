@@ -134,12 +134,20 @@ async function matchWardsFromCSV() {
     process.exit(1);
   }
 
-  // Load and parse CSV
+  // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
   const csvContent = fs.readFileSync(CSV_PATH, 'utf8');
+
+  // Detect delimiter (tab or comma)
+  const firstLine = csvContent.split('\n')[0];
+  const delimiter = firstLine.includes('\t') ? '\t' : ',';
+  console.log(`Detected delimiter: ${delimiter === '\t' ? 'TAB' : 'COMMA'}`);
+
   const records = parse(csvContent, {
     columns: true,
-    skip_empty_lines: true
+    skip_empty_lines: true,
+    delimiter: delimiter,
+    trim: true
   });
 
   console.log(`Found ${records.length} ward-constituency mappings\n`);
