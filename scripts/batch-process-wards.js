@@ -32,22 +32,23 @@ function pointInPolygon(point, polygon) {
 
 // Check if ward centroid is inside constituency
 function wardInConstituency(wardGeometry, constituencyGeometry) {
-  // Calculate ward centroid
+  // Calculate ward centroid from the original GeoJSON geometry
   let sumLat = 0, sumLng = 0, count = 0;
 
   const wardCoords = wardGeometry.coordinates[0]; // First ring of polygon
+  // Ward coords are [lng, lat] in GeoJSON
   for (const [lng, lat] of wardCoords) {
     sumLng += lng;
     sumLat += lat;
     count++;
   }
 
-  const centroid = [sumLng / count, sumLat / count];
+  const centroid = [sumLng / count, sumLat / count]; // [lng, lat]
 
   // Check if centroid is in any polygon of the constituency
   if (constituencyGeometry.type === 'MultiPolygon') {
     for (const polygon of constituencyGeometry.coordinates) {
-      const ring = polygon[0]; // Outer ring
+      const ring = polygon[0]; // Outer ring (already in [lng, lat] format)
       if (pointInPolygon(centroid, ring)) {
         return true;
       }
@@ -72,30 +73,67 @@ function generateDemographics() {
   };
 }
 
+// Generate placeholder events for a constituency based on its wards
+function generateEventsForWards(wards) {
+  const categories = ['healthcare', 'education', 'transport', 'housing', 'environment'];
+  const eventTemplates = {
+    healthcare: ['Surgery Expansion', 'Health Centre Opening', 'Hospital Campaign', 'Medical Consultation'],
+    education: ['School Funding', 'College Open Day', 'Library Consultation', 'Education Meeting'],
+    transport: ['Road Improvements', 'Bus Service Changes', 'Cycling Infrastructure', 'Parking Consultation'],
+    housing: ['Development Proposal', 'Regeneration Meeting', 'Planning Consultation', 'Housing Forum'],
+    environment: ['Flood Defence Review', 'Park Improvement', 'Recycling Initiative', 'Green Space Project']
+  };
+
+  const events = [];
+  const eventCount = 6 + Math.floor(Math.random() * 4); // 6-10 events
+
+  for (let i = 0; i < eventCount; i++) {
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const templates = eventTemplates[category];
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    const ward = wards[Math.floor(Math.random() * wards.length)];
+
+    events.push({
+      id: `event_${String(i + 1).padStart(3, '0')}`,
+      title: `${ward.name} ${template}`,
+      category: category,
+      coordinates: ward.center,
+      date: `2024-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+      summary: `Local community event in ${ward.name}`
+    });
+  }
+
+  return events;
+}
+
 // Convert ward GeoJSON to our format
 function processWard(feature) {
   const properties = feature.properties;
   const geometry = feature.geometry;
 
-  // Ward coordinates are already [lng, lat], convert to [lat, lng] for our format
-  const boundary = geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+  // Ward coordinates are already [lng, lat] in GeoJSON
+  // Keep them as [lng, lat] for easier spatial operations
+  const geoJsonBoundary = geometry.coordinates[0];
 
-  // Calculate center
+  // Convert to [lat, lng] for our storage format (to match constituencies)
+  const boundary = geoJsonBoundary.map(coord => [coord[1], coord[0]]);
+
+  // Calculate center from [lng, lat] coords
   let sumLat = 0, sumLng = 0, count = 0;
-  for (const [lat, lng] of boundary) {
+  for (const [lng, lat] of geoJsonBoundary) {
     sumLat += lat;
     sumLng += lng;
     count++;
   }
-  const center = [sumLat / count, sumLng / count];
+  const center = [sumLat / count, sumLng / count]; // [lat, lng] format
 
   return {
     id: properties.reference || properties.entity,
     name: properties.name,
-    boundary: boundary,
-    center: center,
+    boundary: boundary,  // [lat, lng] format
+    center: center,      // [lat, lng] format
     demographics: generateDemographics(),
-    // Store geometry for spatial matching
+    // Store original geometry for spatial matching (keeps [lng, lat] format)
     _geometry: geometry
   };
 }
@@ -141,6 +179,10 @@ async function batchProcessWards() {
     const data = JSON.parse(
       fs.readFileSync(path.join(CONSTITUENCIES_DIR, file), 'utf8')
     );
+
+    // IMPORTANT: Clear existing placeholder wards
+    data.wards = [];
+
     constituencies[file] = data;
   }
 
@@ -149,6 +191,7 @@ async function batchProcessWards() {
 
   let matched = 0;
   let unmatched = 0;
+  const unmatchedWards = [];
 
   for (const wardFeature of wardsGeoJSON.features) {
     const ward = processWard(wardFeature);
@@ -159,6 +202,7 @@ async function batchProcessWards() {
       if (!constituencyData.constituency.multiPolygonBoundary) continue;
 
       // Create geometry object for constituency
+      // Constituencies are stored as [lat, lng], convert to [lng, lat] for GeoJSON/spatial operations
       const constituencyGeometry = {
         type: 'MultiPolygon',
         coordinates: constituencyData.constituency.multiPolygonBoundary.map(polygon =>
@@ -169,21 +213,14 @@ async function batchProcessWards() {
       };
 
       if (wardInConstituency(ward._geometry, constituencyGeometry)) {
-        // Add ward to this constituency
-        if (!constituencyData.wards) {
-          constituencyData.wards = [];
-        }
-
         // Remove temporary geometry property
         delete ward._geometry;
 
-        // Check if ward already exists (avoid duplicates)
-        const exists = constituencyData.wards.some(w => w.id === ward.id);
-        if (!exists) {
-          constituencyData.wards.push(ward);
-          matched++;
-          console.log(`✓ ${ward.name} → ${constituencyData.constituency.name}`);
-        }
+        // Add ward to this constituency
+        constituencyData.wards.push(ward);
+
+        matched++;
+        console.log(`✓ ${ward.name} → ${constituencyData.constituency.name}`);
 
         foundMatch = true;
         break;
@@ -192,29 +229,60 @@ async function batchProcessWards() {
 
     if (!foundMatch) {
       unmatched++;
-      console.log(`✗ ${ward.name} - no constituency match found`);
+      unmatchedWards.push(ward.name);
+      if (unmatched <= 10) { // Only log first 10
+        console.log(`✗ ${ward.name} - no constituency match found`);
+      }
     }
   }
 
-  console.log('\n=== Saving updated constituency files ===\n');
+  if (unmatched > 10) {
+    console.log(`... and ${unmatched - 10} more unmatched wards`);
+  }
+
+  console.log('\n=== Regenerating events for real wards ===\n');
+
+  // Regenerate events for constituencies with real wards
+  for (const [filename, constituencyData] of Object.entries(constituencies)) {
+    if (constituencyData.wards.length > 0) {
+      // Generate new events based on real wards
+      constituencyData.events = generateEventsForWards(constituencyData.wards);
+    }
+  }
+
+  console.log('=== Saving updated constituency files ===\n');
 
   // Save updated constituency files
   let updatedCount = 0;
+  let emptyCount = 0;
+
   for (const [filename, constituencyData] of Object.entries(constituencies)) {
-    if (constituencyData.wards && constituencyData.wards.length > 0) {
-      // Replace placeholder wards with real ones
-      const filepath = path.join(CONSTITUENCIES_DIR, filename);
+    const filepath = path.join(CONSTITUENCIES_DIR, filename);
+
+    if (constituencyData.wards.length > 0) {
+      // Has real wards, save it
       fs.writeFileSync(filepath, JSON.stringify(constituencyData, null, 2));
       updatedCount++;
-      console.log(`✓ Updated: ${filename} (${constituencyData.wards.length} wards)`);
+      console.log(`✓ Updated: ${filename} (${constituencyData.wards.length} wards, ${constituencyData.events.length} events)`);
+    } else {
+      // No wards matched - this constituency will have empty wards array
+      // Still save it to clear out placeholder wards
+      fs.writeFileSync(filepath, JSON.stringify(constituencyData, null, 2));
+      emptyCount++;
+      console.log(`⚠ ${filename} has no matched wards`);
     }
   }
 
   console.log(`\n=== Processing Complete ===`);
   console.log(`Wards matched: ${matched}`);
   console.log(`Wards unmatched: ${unmatched}`);
-  console.log(`Constituencies updated: ${updatedCount}`);
+  console.log(`Constituencies with wards: ${updatedCount}`);
+  console.log(`Constituencies without wards: ${emptyCount}`);
   console.log(`Total wards processed: ${wardsGeoJSON.features.length}`);
+
+  if (unmatchedWards.length > 0) {
+    console.log(`\nFirst unmatched wards: ${unmatchedWards.slice(0, 5).join(', ')}`);
+  }
 }
 
 // Run
