@@ -789,6 +789,48 @@ async function matchWardsFromCSV() {
     console.log(`... and ${unmatched - 10} more unmatched wards`);
   }
 
+  console.log('\n=== Creating All England Wards GeoJSON ===\n');
+
+  // Create GeoJSON with all wards for correlation analysis
+  const allWardsFeatures = [];
+
+  for (const feature of wardsGeoJSON.features) {
+    const properties = feature.properties;
+    const wardCode = properties.WD25CD;
+    const wardName = properties.WD25NM;
+
+    // Get the demographics for this ward
+    const demographics = generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData);
+
+    // Create GeoJSON feature with demographics
+    allWardsFeatures.push({
+      type: 'Feature',
+      id: wardCode,
+      properties: {
+        id: wardCode,
+        name: wardName,
+        ...demographics
+      },
+      geometry: feature.geometry
+    });
+  }
+
+  const allWardsGeoJSON = {
+    type: 'FeatureCollection',
+    features: allWardsFeatures
+  };
+
+  // Save all wards to public data directory
+  const publicDataDir = '../public/data';
+  if (!fs.existsSync(publicDataDir)) {
+    fs.mkdirSync(publicDataDir, { recursive: true });
+  }
+
+  const englandWardsPath = path.join(publicDataDir, 'england-wards.json');
+  fs.writeFileSync(englandWardsPath, JSON.stringify(allWardsGeoJSON, null, 2));
+  console.log(`✓ Created england-wards.json with ${allWardsFeatures.length} wards`);
+  console.log(`  File saved to: ${englandWardsPath}`);
+
   console.log('\n=== Regenerating events for real wards ===\n');
 
   // Regenerate events for constituencies with wards
