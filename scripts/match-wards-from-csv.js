@@ -10,6 +10,8 @@ import { parse } from 'csv-parse/sync';
 // Input files
 const CSV_PATH = process.argv[2] || './ward-constituency-mapping.csv';
 const WARDS_GEOJSON_PATH = process.argv[3] || './wards.geojson';
+const LSOA_DATA_PATH = process.argv[4]; // Optional: LSOA deprivation data CSV
+const LSOA_WARD_MAPPING_PATH = process.argv[5]; // Optional: LSOA to Ward mapping CSV
 
 // Output directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
@@ -31,27 +33,223 @@ const TEST_CONSTITUENCY_NAMES = [
   'Norwich South'
 ];
 
-// Generate mock demographic data
-function generateDemographics() {
-  return {
-    population: 5000 + Math.floor(Math.random() * 10000),
-    income: {
-      median: 25000 + Math.floor(Math.random() * 30000),
-      mean: 30000 + Math.floor(Math.random() * 40000)
-    },
-    age: {
-      under18: Math.floor(Math.random() * 25),
-      '18-64': 60 + Math.floor(Math.random() * 15),
-      over65: 15 + Math.floor(Math.random() * 20)
-    },
-    education: {
-      noQualifications: Math.floor(Math.random() * 20),
-      level4Plus: 25 + Math.floor(Math.random() * 30)
-    },
-    employment: {
-      employed: 65 + Math.floor(Math.random() * 20),
-      unemployed: 2 + Math.floor(Math.random() * 8)
+// Generate demographics from LSOA data or fall back to mock data
+function generateDemographics(wardCode, lsoaData) {
+  // If no LSOA data provided, return mock data
+  if (!lsoaData || !lsoaData.wardToLSOAs || !lsoaData.lsoaRankings) {
+    return {
+      population: 5000 + Math.floor(Math.random() * 10000),
+      imdRank: null,
+      imdDecile: null,
+      incomeRank: null,
+      incomeDecile: null,
+      employmentRank: null,
+      employmentDecile: null,
+      educationRank: null,
+      educationDecile: null,
+      healthRank: null,
+      healthDecile: null,
+      crimeRank: null,
+      crimeDecile: null,
+      housingRank: null,
+      housingDecile: null,
+      environmentRank: null,
+      environmentDecile: null
+    };
+  }
+
+  // Get all LSOAs for this ward
+  const lsoasInWard = lsoaData.wardToLSOAs[wardCode] || [];
+
+  if (lsoasInWard.length === 0) {
+    // No LSOAs found for this ward, return null values
+    return {
+      population: 8000, // Estimate
+      imdRank: null,
+      imdDecile: null,
+      incomeRank: null,
+      incomeDecile: null,
+      employmentRank: null,
+      employmentDecile: null,
+      educationRank: null,
+      educationDecile: null,
+      healthRank: null,
+      healthDecile: null,
+      crimeRank: null,
+      crimeDecile: null,
+      housingRank: null,
+      housingDecile: null,
+      environmentRank: null,
+      environmentDecile: null
+    };
+  }
+
+  // Calculate average ranks across all LSOAs in this ward
+  const averages = {
+    imdRank: 0,
+    imdDecile: 0,
+    incomeRank: 0,
+    incomeDecile: 0,
+    employmentRank: 0,
+    employmentDecile: 0,
+    educationRank: 0,
+    educationDecile: 0,
+    healthRank: 0,
+    healthDecile: 0,
+    crimeRank: 0,
+    crimeDecile: 0,
+    housingRank: 0,
+    housingDecile: 0,
+    environmentRank: 0,
+    environmentDecile: 0
+  };
+
+  let count = 0;
+  for (const lsoaCode of lsoasInWard) {
+    const lsoaRanking = lsoaData.lsoaRankings[lsoaCode];
+    if (lsoaRanking) {
+      averages.imdRank += lsoaRanking.imdRank || 0;
+      averages.imdDecile += lsoaRanking.imdDecile || 0;
+      averages.incomeRank += lsoaRanking.incomeRank || 0;
+      averages.incomeDecile += lsoaRanking.incomeDecile || 0;
+      averages.employmentRank += lsoaRanking.employmentRank || 0;
+      averages.employmentDecile += lsoaRanking.employmentDecile || 0;
+      averages.educationRank += lsoaRanking.educationRank || 0;
+      averages.educationDecile += lsoaRanking.educationDecile || 0;
+      averages.healthRank += lsoaRanking.healthRank || 0;
+      averages.healthDecile += lsoaRanking.healthDecile || 0;
+      averages.crimeRank += lsoaRanking.crimeRank || 0;
+      averages.crimeDecile += lsoaRanking.crimeDecile || 0;
+      averages.housingRank += lsoaRanking.housingRank || 0;
+      averages.housingDecile += lsoaRanking.housingDecile || 0;
+      averages.environmentRank += lsoaRanking.environmentRank || 0;
+      averages.environmentDecile += lsoaRanking.environmentDecile || 0;
+      count++;
     }
+  }
+
+  // Calculate averages and round to integers
+  if (count > 0) {
+    for (const key in averages) {
+      averages[key] = Math.round(averages[key] / count);
+    }
+  }
+
+  return {
+    population: count * 1600, // Estimate: ~1600 people per LSOA on average
+    lsoaCount: count,
+    imdRank: averages.imdRank,
+    imdDecile: averages.imdDecile,
+    incomeRank: averages.incomeRank,
+    incomeDecile: averages.incomeDecile,
+    employmentRank: averages.employmentRank,
+    employmentDecile: averages.employmentDecile,
+    educationRank: averages.educationRank,
+    educationDecile: averages.educationDecile,
+    healthRank: averages.healthRank,
+    healthDecile: averages.healthDecile,
+    crimeRank: averages.crimeRank,
+    crimeDecile: averages.crimeDecile,
+    housingRank: averages.housingRank,
+    housingDecile: averages.housingDecile,
+    environmentRank: averages.environmentRank,
+    environmentDecile: averages.environmentDecile
+  };
+}
+
+// Load and process LSOA data files
+function loadLSOAData() {
+  if (!LSOA_DATA_PATH || !LSOA_WARD_MAPPING_PATH) {
+    console.log('LSOA data files not provided - using mock demographics\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_DATA_PATH)) {
+    console.warn(`Warning: LSOA data file not found: ${LSOA_DATA_PATH}`);
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_WARD_MAPPING_PATH)) {
+    console.warn(`Warning: LSOA-Ward mapping file not found: ${LSOA_WARD_MAPPING_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA data from: ${LSOA_DATA_PATH}...`);
+  console.log(`Loading LSOA-Ward mapping from: ${LSOA_WARD_MAPPING_PATH}...`);
+
+  // Load LSOA deprivation rankings
+  let lsoaContent = fs.readFileSync(LSOA_DATA_PATH, 'utf8');
+  if (lsoaContent.charCodeAt(0) === 0xFEFF) {
+    lsoaContent = lsoaContent.slice(1);
+  }
+  const lsoaRecords = parse(lsoaContent, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${lsoaRecords.length} LSOA records`);
+
+  // Build LSOA rankings map: lsoaCode -> rankings object
+  const lsoaRankings = {};
+  for (const record of lsoaRecords) {
+    const lsoaCode = record['LSOA code (2021)'] || record.LSOA21CD;
+    if (lsoaCode) {
+      lsoaRankings[lsoaCode] = {
+        imdRank: parseInt(record['Index of Multiple Deprivation (IMD) Rank']) || null,
+        imdDecile: parseInt(record['Index of Multiple Deprivation (IMD) Decile']) || null,
+        incomeRank: parseInt(record['Income Rank']) || null,
+        incomeDecile: parseInt(record['Income Decile']) || null,
+        employmentRank: parseInt(record['Employment Rank']) || null,
+        employmentDecile: parseInt(record['Employment Decile']) || null,
+        educationRank: parseInt(record['Education Skills and Training Rank']) || null,
+        educationDecile: parseInt(record['Education Skills and Training Decile']) || null,
+        healthRank: parseInt(record['Health Deprivation and Disability Rank']) || null,
+        healthDecile: parseInt(record['Health Deprivation and Disability Decile']) || null,
+        crimeRank: parseInt(record['Crime Rank']) || null,
+        crimeDecile: parseInt(record['Crime Decile']) || null,
+        housingRank: parseInt(record['Barriers to Housing and Services Rank']) || null,
+        housingDecile: parseInt(record['Barriers to Housing and Services Decile']) || null,
+        environmentRank: parseInt(record['Living Environment Rank']) || null,
+        environmentDecile: parseInt(record['Living Environment Decile']) || null
+      };
+    }
+  }
+
+  // Load LSOA to Ward mapping
+  let mappingContent = fs.readFileSync(LSOA_WARD_MAPPING_PATH, 'utf8');
+  if (mappingContent.charCodeAt(0) === 0xFEFF) {
+    mappingContent = mappingContent.slice(1);
+  }
+  const mappingRecords = parse(mappingContent, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${mappingRecords.length} LSOA-Ward mappings`);
+
+  // Build ward to LSOAs map: wardCode -> [lsoaCode1, lsoaCode2, ...]
+  const wardToLSOAs = {};
+  for (const record of mappingRecords) {
+    const lsoaCode = record.LSOA21CD;
+    const wardCode = record.WD25CD;
+
+    if (lsoaCode && wardCode) {
+      if (!wardToLSOAs[wardCode]) {
+        wardToLSOAs[wardCode] = [];
+      }
+      wardToLSOAs[wardCode].push(lsoaCode);
+    }
+  }
+
+  console.log(`Mapped ${Object.keys(wardToLSOAs).length} wards to LSOAs\n`);
+
+  return {
+    lsoaRankings,
+    wardToLSOAs
   };
 }
 
@@ -116,8 +314,9 @@ async function matchWardsFromCSV() {
   // Check if CSV exists
   if (!fs.existsSync(CSV_PATH)) {
     console.error(`Error: CSV file not found: ${CSV_PATH}`);
-    console.error('\nUsage: node match-wards-from-csv.js <csv-path> <wards-geojson-path> [--test]');
-    console.error('Example: node match-wards-from-csv.js ./ward-mapping.csv ./Wards_December_2024.geojson');
+    console.error('\nUsage: node match-wards-from-csv.js <ward-constituency-csv> <wards-geojson> [lsoa-data-csv] [lsoa-ward-mapping-csv] [--test]');
+    console.error('Example: node match-wards-from-csv.js ./ward-mapping.csv ./Wards_May_2025.geojson');
+    console.error('With LSOA data: node match-wards-from-csv.js ./ward-mapping.csv ./Wards_May_2025.geojson ./LSOA_Data.csv ./LSOA_Ward_Mapping.csv');
     process.exit(1);
   }
 
@@ -133,6 +332,9 @@ async function matchWardsFromCSV() {
     console.error('Please run batch-process-constituencies.js first');
     process.exit(1);
   }
+
+  // Load LSOA deprivation data (optional)
+  const lsoaData = loadLSOAData();
 
   // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
@@ -327,7 +529,7 @@ async function matchWardsFromCSV() {
       name: wardName,
       boundary: boundary,
       center: center,
-      demographics: generateDemographics()
+      demographics: generateDemographics(wardCode, lsoaData)
     };
 
     // Add multiPolygonBoundary if it's a MultiPolygon ward
