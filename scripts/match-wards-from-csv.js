@@ -166,7 +166,14 @@ async function matchWardsFromCSV() {
   // Load wards GeoJSON
   console.log(`Loading wards: ${WARDS_GEOJSON_PATH}...`);
   const wardsGeoJSON = JSON.parse(fs.readFileSync(WARDS_GEOJSON_PATH, 'utf8'));
-  console.log(`Found ${wardsGeoJSON.features.length} wards\n`);
+  console.log(`Found ${wardsGeoJSON.features.length} wards`);
+
+  // Show sample ward properties for debugging
+  if (wardsGeoJSON.features.length > 0) {
+    const sampleProps = wardsGeoJSON.features[0].properties;
+    console.log(`Sample ward properties:`, Object.keys(sampleProps).join(', '));
+    console.log(`Sample ward code fields: reference=${sampleProps.reference}, entity=${sampleProps.entity}, WD23CD=${sampleProps.WD23CD}, WD24CD=${sampleProps.WD24CD}\n`);
+  }
 
   // Load constituency files
   let constituencyFiles = fs.readdirSync(CONSTITUENCIES_DIR)
@@ -208,13 +215,21 @@ async function matchWardsFromCSV() {
   const unmatchedWards = [];
 
   for (const wardFeature of wardsGeoJSON.features) {
-    const wardCode = wardFeature.properties.WD23CD || wardFeature.properties.WD24CD;
-    const wardName = wardFeature.properties.WD23NM || wardFeature.properties.WD24NM || wardFeature.properties.name;
+    // Try multiple possible property names for ward code
+    const wardCode = wardFeature.properties.WD23CD ||
+                     wardFeature.properties.WD24CD ||
+                     wardFeature.properties.reference ||
+                     wardFeature.properties.entity;
+
+    // Try multiple possible property names for ward name
+    const wardName = wardFeature.properties.WD23NM ||
+                     wardFeature.properties.WD24NM ||
+                     wardFeature.properties.name;
 
     if (!wardCode) {
-      console.log(`⚠ Ward has no code: ${wardName}`);
+      console.log(`⚠ Ward has no code: ${wardName || 'Unknown'}`);
       unmatched++;
-      unmatchedWards.push(wardName);
+      unmatchedWards.push(wardName || 'Unknown');
       continue;
     }
 
