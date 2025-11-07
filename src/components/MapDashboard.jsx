@@ -52,6 +52,16 @@ const getColorForPopulationDensity = (density) => {
   return '#22c55e'; // Very dense - dark green
 };
 
+// Helper: Get color for ethnicity percentage (0-100%)
+const getColorForEthnicity = (percent) => {
+  if (!percent && percent !== 0) return 'rgba(200, 200, 200, 0.3)'; // No data
+  if (percent < 10) return '#fef3c7'; // Very low - pale yellow
+  if (percent < 25) return '#fde047'; // Low - yellow
+  if (percent < 50) return '#facc15'; // Medium - gold
+  if (percent < 75) return '#eab308'; // High - darker gold
+  return '#ca8a04'; // Very high - dark gold
+};
+
 const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const mapRef = useRef();
   const [hoveredWardId, setHoveredWardId] = useState(null);
@@ -134,7 +144,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
       };
     }
 
-    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity'].find(
+    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity', 'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite'].find(
       layer => activeLayers?.[layer]
     );
 
@@ -200,6 +210,18 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
               const area = calculateArea(ward.boundary);
               const density = area > 0 ? Math.round(ward.demographics.population / area) : 0;
               fillColor = getColorForPopulationDensity(density);
+              break;
+            case 'ethnicityAsian':
+              fillColor = getColorForEthnicity(ward.demographics.asianPercent);
+              break;
+            case 'ethnicityBlack':
+              fillColor = getColorForEthnicity(ward.demographics.blackPercent);
+              break;
+            case 'ethnicityMixed':
+              fillColor = getColorForEthnicity(ward.demographics.mixedPercent);
+              break;
+            case 'ethnicityWhite':
+              fillColor = getColorForEthnicity(ward.demographics.whitePercent);
               break;
           }
         }
@@ -467,7 +489,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   }, []);
 
   // Determine which demographic layer is active for legend/info
-  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity'].find(
+  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity', 'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite'].find(
     layer => activeLayers?.[layer]
   );
 
@@ -694,12 +716,24 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
                       {activeDemographic === 'environment' && 'Living Environment'}
                       {activeDemographic === 'age' && 'Average Age'}
                       {activeDemographic === 'populationDensity' && 'Population Density'}
+                      {activeDemographic === 'ethnicityAsian' && 'Ethnicity: % Asian'}
+                      {activeDemographic === 'ethnicityBlack' && 'Ethnicity: % Black'}
+                      {activeDemographic === 'ethnicityMixed' && 'Ethnicity: % Mixed'}
+                      {activeDemographic === 'ethnicityWhite' && 'Ethnicity: % White'}
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
                       {activeDemographic === 'age' ? (
                         `${selectedWard.averageAge || 'N/A'} years`
                       ) : activeDemographic === 'populationDensity' ? (
                         'View on map'
+                      ) : activeDemographic === 'ethnicityAsian' ? (
+                        `${selectedWard.asianPercent || 'N/A'}%`
+                      ) : activeDemographic === 'ethnicityBlack' ? (
+                        `${selectedWard.blackPercent || 'N/A'}%`
+                      ) : activeDemographic === 'ethnicityMixed' ? (
+                        `${selectedWard.mixedPercent || 'N/A'}%`
+                      ) : activeDemographic === 'ethnicityWhite' ? (
+                        `${selectedWard.whitePercent || 'N/A'}%`
                       ) : (
                         `Decile ${
                           activeDemographic === 'imd' ? selectedWard.imdDecile :
@@ -756,6 +790,10 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             {activeDemographic === 'environment' && 'Living Environment'}
             {activeDemographic === 'age' && 'Average Age'}
             {activeDemographic === 'populationDensity' && 'Population Density'}
+            {activeDemographic === 'ethnicityAsian' && 'Ethnicity: % Asian'}
+            {activeDemographic === 'ethnicityBlack' && 'Ethnicity: % Black'}
+            {activeDemographic === 'ethnicityMixed' && 'Ethnicity: % Mixed'}
+            {activeDemographic === 'ethnicityWhite' && 'Ethnicity: % White'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {activeDemographic === 'age' ? (
@@ -802,6 +840,29 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '20px', height: '12px', background: '#22c55e', border: '1px solid #ccc' }}></div>
                   <span>8k+ per km²</span>
+                </div>
+              </>
+            ) : (activeDemographic === 'ethnicityAsian' || activeDemographic === 'ethnicityBlack' || activeDemographic === 'ethnicityMixed' || activeDemographic === 'ethnicityWhite') ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fef3c7', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 10%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#fde047', border: '1px solid #ccc' }}></div>
+                  <span>10-25%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#facc15', border: '1px solid #ccc' }}></div>
+                  <span>25-50%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#eab308', border: '1px solid #ccc' }}></div>
+                  <span>50-75%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#ca8a04', border: '1px solid #ccc' }}></div>
+                  <span>75-100%</span>
                 </div>
               </>
             ) : (

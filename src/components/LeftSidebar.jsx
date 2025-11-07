@@ -1,4 +1,8 @@
+import { useState } from 'react';
+
 const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange }) => {
+  const [expandedSubmenu, setExpandedSubmenu] = useState(null);
+
   const categories = [
     { id: 'all', label: 'All', color: 'bg-primary-blue' },
     { id: 'healthcare', label: 'Healthcare', color: 'bg-blue-500' },
@@ -78,6 +82,49 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
               checked={activeLayers.populationDensity}
               onChange={() => onToggleLayer('populationDensity')}
             />
+          </div>
+        </div>
+
+        {/* Ethnicity Section with Submenu */}
+        <div className="mb-8">
+          <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
+            Ethnicity
+          </h3>
+          <div className="space-y-2">
+            <div
+              className="relative"
+              onMouseEnter={() => setExpandedSubmenu('ethnicity')}
+              onMouseLeave={() => setExpandedSubmenu(null)}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Ethnicity Breakdown →</span>
+              </div>
+
+              {expandedSubmenu === 'ethnicity' && (
+                <div className="absolute left-full top-0 ml-2 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-10">
+                  <LayerToggle
+                    label="% Asian"
+                    checked={activeLayers.ethnicityAsian}
+                    onChange={() => onToggleLayer('ethnicityAsian')}
+                  />
+                  <LayerToggle
+                    label="% Black"
+                    checked={activeLayers.ethnicityBlack}
+                    onChange={() => onToggleLayer('ethnicityBlack')}
+                  />
+                  <LayerToggle
+                    label="% Mixed"
+                    checked={activeLayers.ethnicityMixed}
+                    onChange={() => onToggleLayer('ethnicityMixed')}
+                  />
+                  <LayerToggle
+                    label="% White"
+                    checked={activeLayers.ethnicityWhite}
+                    onChange={() => onToggleLayer('ethnicityWhite')}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
