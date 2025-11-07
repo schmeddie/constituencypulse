@@ -159,13 +159,42 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
           }
         }
 
-        const coordinates = convertBoundaryToGeoJSON(ward.boundary);
+        // Check if ward has MultiPolygon boundary (includes islands/exclaves)
+        let geometry;
+        if (ward.multiPolygonBoundary) {
+          // MultiPolygon: Render all polygons (main area + islands)
+          const multiPolygonCoords = ward.multiPolygonBoundary.map(polygon =>
+            polygon.map(ring => {
+              const coords = convertBoundaryToGeoJSON(ring);
+              // Ensure each ring is closed
+              const first = coords[0];
+              const last = coords[coords.length - 1];
+              if (first[0] !== last[0] || first[1] !== last[1]) {
+                coords.push([...first]);
+              }
+              return coords;
+            })
+          );
 
-        // Ensure polygon is closed (first point equals last point)
-        const first = coordinates[0];
-        const last = coordinates[coordinates.length - 1];
-        if (first[0] !== last[0] || first[1] !== last[1]) {
-          coordinates.push([...first]); // Close the polygon
+          geometry = {
+            type: 'MultiPolygon',
+            coordinates: multiPolygonCoords
+          };
+        } else {
+          // Simple Polygon
+          const coordinates = convertBoundaryToGeoJSON(ward.boundary);
+
+          // Ensure polygon is closed (first point equals last point)
+          const first = coordinates[0];
+          const last = coordinates[coordinates.length - 1];
+          if (first[0] !== last[0] || first[1] !== last[1]) {
+            coordinates.push([...first]); // Close the polygon
+          }
+
+          geometry = {
+            type: 'Polygon',
+            coordinates: [coordinates]
+          };
         }
 
         features.push({
@@ -182,10 +211,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             employed: ward.demographics.employed,
             fillColor: fillColor
           },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [coordinates]
-          }
+          geometry: geometry
         });
       } catch (error) {
         console.error(`Failed to create geometry for ward ${ward.name}:`, error);

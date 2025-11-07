@@ -283,6 +283,7 @@ async function matchWardsFromCSV() {
     // Create ward object - handle both Polygon and MultiPolygon
     let boundary;
     let center;
+    let multiPolygonBoundary = null; // Store all polygons for MultiPolygon wards
 
     const geomType = wardFeature.geometry.type;
 
@@ -291,11 +292,17 @@ async function matchWardsFromCSV() {
       boundary = wardFeature.geometry.coordinates[0].map(([lng, lat]) => [lat, lng]);
       center = calculateCenter(wardFeature.geometry.coordinates);
     } else if (geomType === 'MultiPolygon') {
-      // MultiPolygon: Find the largest polygon (main area, not small islands)
+      // MultiPolygon: Store ALL polygons (main area + islands/exclaves)
+      multiPolygonBoundary = wardFeature.geometry.coordinates.map(polygon =>
+        polygon.map(ring =>
+          ring.map(([lng, lat]) => [lat, lng])
+        )
+      );
+
+      // Find the largest polygon for the main boundary (backward compatibility)
       let largestPolygon = wardFeature.geometry.coordinates[0][0];
       let maxPoints = largestPolygon.length;
 
-      // Check all polygons and find the one with most vertices (likely largest area)
       for (const polygon of wardFeature.geometry.coordinates) {
         const outerRing = polygon[0];
         if (outerRing.length > maxPoints) {
@@ -305,8 +312,9 @@ async function matchWardsFromCSV() {
       }
 
       boundary = largestPolygon.map(([lng, lat]) => [lat, lng]);
-      // For center, use the centroid of the largest polygon
-      center = calculateCenter([largestPolygon]);
+      // Calculate center from all polygons
+      const allCoords = wardFeature.geometry.coordinates.flatMap(polygon => polygon[0]);
+      center = calculateCenter([allCoords]);
     } else {
       console.warn(`⚠ Ward ${wardName} has unsupported geometry type: ${geomType}`);
       unmatched++;
@@ -321,6 +329,11 @@ async function matchWardsFromCSV() {
       center: center,
       demographics: generateDemographics()
     };
+
+    // Add multiPolygonBoundary if it's a MultiPolygon ward
+    if (multiPolygonBoundary) {
+      ward.multiPolygonBoundary = multiPolygonBoundary;
+    }
 
     // Add ward to each constituency it belongs to
     let addedToAny = false;
