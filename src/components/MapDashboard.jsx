@@ -10,38 +10,26 @@ const convertBoundaryToGeoJSON = (boundary) => {
   return boundary.map(coord => [coord[1], coord[0]]);
 };
 
-// Helper: Get color for demographic value
-const getColorForAge = (medianAge) => {
-  if (medianAge < 35) return '#dbeafe';
-  if (medianAge < 45) return '#93c5fd';
-  if (medianAge < 55) return '#60a5fa';
-  if (medianAge < 65) return '#3b82f6';
-  return '#2563eb';
+// Helper: Get color for LSOA deprivation deciles (1-10)
+// Decile 1 = Most deprived (red), Decile 10 = Least deprived (green)
+const getColorForDeprivation = (decile) => {
+  if (!decile) return 'rgba(200, 200, 200, 0.3)'; // No data
+  if (decile <= 2) return '#dc2626'; // Most deprived - dark red
+  if (decile <= 4) return '#f97316'; // High deprivation - orange
+  if (decile <= 6) return '#fbbf24'; // Medium deprivation - yellow
+  if (decile <= 8) return '#84cc16'; // Low deprivation - lime
+  return '#22c55e'; // Least deprived - green
 };
 
-const getColorForIncome = (medianIncome) => {
-  if (medianIncome < 25000) return '#d1fae5';
-  if (medianIncome < 30000) return '#86efac';
-  if (medianIncome < 35000) return '#4ade80';
-  if (medianIncome < 40000) return '#22c55e';
-  return '#059669';
-};
-
-const getColorForEducation = (higherEducation) => {
-  if (higherEducation < 25) return '#e9d5ff';
-  if (higherEducation < 35) return '#d8b4fe';
-  if (higherEducation < 45) return '#c084fc';
-  if (higherEducation < 55) return '#a855f7';
-  return '#7e22ce';
-};
-
-const getColorForEmployment = (employed) => {
-  if (employed < 55) return '#fed7aa';
-  if (employed < 65) return '#fdba74';
-  if (employed < 75) return '#fb923c';
-  if (employed < 85) return '#f97316';
-  return '#c2410c';
-};
+// All deprivation indices use the same color scale
+const getColorForIMD = (decile) => getColorForDeprivation(decile);
+const getColorForIncome = (decile) => getColorForDeprivation(decile);
+const getColorForEducation = (decile) => getColorForDeprivation(decile);
+const getColorForEmployment = (decile) => getColorForDeprivation(decile);
+const getColorForHealth = (decile) => getColorForDeprivation(decile);
+const getColorForCrime = (decile) => getColorForDeprivation(decile);
+const getColorForHousing = (decile) => getColorForDeprivation(decile);
+const getColorForEnvironment = (decile) => getColorForDeprivation(decile);
 
 const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const mapRef = useRef();
@@ -124,7 +112,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
       };
     }
 
-    const activeDemographic = ['age', 'income', 'education', 'employment'].find(
+    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment'].find(
       layer => activeLayers?.[layer]
     );
 
@@ -144,17 +132,29 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
 
         if (activeDemographic) {
           switch (activeDemographic) {
-            case 'age':
-              fillColor = getColorForAge(ward.demographics.medianAge);
+            case 'imd':
+              fillColor = getColorForIMD(ward.demographics.imdDecile);
               break;
             case 'income':
-              fillColor = getColorForIncome(ward.demographics.medianIncome);
+              fillColor = getColorForIncome(ward.demographics.incomeDecile);
               break;
             case 'education':
-              fillColor = getColorForEducation(ward.demographics.higherEducation);
+              fillColor = getColorForEducation(ward.demographics.educationDecile);
               break;
             case 'employment':
-              fillColor = getColorForEmployment(ward.demographics.employed);
+              fillColor = getColorForEmployment(ward.demographics.employmentDecile);
+              break;
+            case 'health':
+              fillColor = getColorForHealth(ward.demographics.healthDecile);
+              break;
+            case 'crime':
+              fillColor = getColorForCrime(ward.demographics.crimeDecile);
+              break;
+            case 'housing':
+              fillColor = getColorForHousing(ward.demographics.housingDecile);
+              break;
+            case 'environment':
+              fillColor = getColorForEnvironment(ward.demographics.environmentDecile);
               break;
           }
         }
@@ -204,11 +204,31 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
             id: ward.id,
             name: ward.name,
             population: ward.demographics.population,
-            voters: ward.demographics.voters,
-            medianAge: ward.demographics.medianAge,
-            medianIncome: ward.demographics.medianIncome,
-            higherEducation: ward.demographics.higherEducation,
-            employed: ward.demographics.employed,
+            lsoaCount: ward.demographics.lsoaCount,
+            // IMD - Index of Multiple Deprivation
+            imdRank: ward.demographics.imdRank,
+            imdDecile: ward.demographics.imdDecile,
+            // Income deprivation
+            incomeRank: ward.demographics.incomeRank,
+            incomeDecile: ward.demographics.incomeDecile,
+            // Employment deprivation
+            employmentRank: ward.demographics.employmentRank,
+            employmentDecile: ward.demographics.employmentDecile,
+            // Education deprivation
+            educationRank: ward.demographics.educationRank,
+            educationDecile: ward.demographics.educationDecile,
+            // Health deprivation
+            healthRank: ward.demographics.healthRank,
+            healthDecile: ward.demographics.healthDecile,
+            // Crime
+            crimeRank: ward.demographics.crimeRank,
+            crimeDecile: ward.demographics.crimeDecile,
+            // Housing barriers
+            housingRank: ward.demographics.housingRank,
+            housingDecile: ward.demographics.housingDecile,
+            // Environment
+            environmentRank: ward.demographics.environmentRank,
+            environmentDecile: ward.demographics.environmentDecile,
             fillColor: fillColor
           },
           geometry: geometry
@@ -349,14 +369,23 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
     });
 
     if (wardFeatures.length > 0) {
-      const wardName = wardFeatures[0].properties.name;
-      const wardPop = wardFeatures[0].properties.population;
-      console.log('Ward clicked:', wardName, `(Population: ${wardPop})`);
+      const props = wardFeatures[0].properties;
+      console.log('Ward clicked:', props.name);
+      console.log('Population:', props.population);
+      console.log('IMD Decile:', props.imdDecile, '(1=most deprived, 10=least deprived)');
+      console.log('Income Decile:', props.incomeDecile);
+      console.log('Education Decile:', props.educationDecile);
+      console.log('Employment Decile:', props.employmentDecile);
+      console.log('Health Decile:', props.healthDecile);
+      console.log('Crime Decile:', props.crimeDecile);
+      console.log('Housing Decile:', props.housingDecile);
+      console.log('Environment Decile:', props.environmentDecile);
+      console.log('LSOAs in ward:', props.lsoaCount);
     }
   }, []);
 
   // Determine which demographic layer is active for legend/info
-  const activeDemographic = ['age', 'income', 'education', 'employment'].find(
+  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment'].find(
     layer => activeLayers?.[layer]
   );
 
