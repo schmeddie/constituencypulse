@@ -303,7 +303,8 @@ function loadLSOAPopulationData() {
   const lsoaPopulation = {};
   for (const record of popRecords) {
     const lsoaCode = record['LSOA 2021 Code'];
-    const total = parseInt(record['Total']) || 0;
+    // Remove commas from Total field before parsing (e.g., "1,898" -> 1898)
+    const total = parseInt((record['Total'] || '').replace(/,/g, '')) || 0;
 
     if (lsoaCode && total > 0) {
       // Parse age group populations
