@@ -13,6 +13,7 @@ const WARDS_GEOJSON_PATH = process.argv[3] || './wards.geojson';
 const LSOA_DATA_PATH = process.argv[4]; // Optional: LSOA deprivation data CSV
 const LSOA_WARD_MAPPING_PATH = process.argv[5]; // Optional: LSOA to Ward mapping CSV
 const LSOA_POPULATION_PATH = process.argv[6]; // Optional: LSOA population/age data CSV
+const LSOA_ETHNICITY_PATH = process.argv[7]; // Optional: LSOA ethnicity data CSV
 
 // Output directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
@@ -35,7 +36,7 @@ const TEST_CONSTITUENCY_NAMES = [
 ];
 
 // Generate demographics from LSOA data or fall back to mock data
-function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
+function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData) {
   // If no LSOA data provided, return mock data
   if (!lsoaData || !lsoaData.wardToLSOAs || !lsoaData.lsoaRankings) {
     return {
@@ -94,6 +95,14 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
   let totalWeightedAge = 0;
   let totalPopulation0to15 = 0;
 
+  // Initialize ethnicity totals
+  let totalEthnicPopulation = 0;
+  let totalAsian = 0;
+  let totalBlack = 0;
+  let totalMixed = 0;
+  let totalWhite = 0;
+  let totalOther = 0;
+
   // Calculate average ranks across all LSOAs in this ward
   const averages = {
     imdRank: 0,
@@ -144,6 +153,17 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
       totalWeightedAge += popData.averageAge * popData.population;
       totalPopulation0to15 += popData.population0to15;
     }
+
+    // Add ethnicity data if available
+    if (lsoaEthnicityData && lsoaEthnicityData[lsoaCode]) {
+      const ethData = lsoaEthnicityData[lsoaCode];
+      totalAsian += ethData.asian;
+      totalBlack += ethData.black;
+      totalMixed += ethData.mixed;
+      totalWhite += ethData.white;
+      totalOther += ethData.other;
+      totalEthnicPopulation += ethData.total;
+    }
   }
 
   // Calculate averages and round to integers
@@ -155,6 +175,22 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
 
   // Calculate average age (weighted by population)
   const averageAge = totalPopulation > 0 ? Math.round(totalWeightedAge / totalPopulation) : null;
+
+  // Calculate ethnicity percentages
+  const ethnicityPercentages = {};
+  if (totalEthnicPopulation > 0) {
+    ethnicityPercentages.asianPercent = Math.round((totalAsian / totalEthnicPopulation) * 100 * 10) / 10;
+    ethnicityPercentages.blackPercent = Math.round((totalBlack / totalEthnicPopulation) * 100 * 10) / 10;
+    ethnicityPercentages.mixedPercent = Math.round((totalMixed / totalEthnicPopulation) * 100 * 10) / 10;
+    ethnicityPercentages.whitePercent = Math.round((totalWhite / totalEthnicPopulation) * 100 * 10) / 10;
+    ethnicityPercentages.otherPercent = Math.round((totalOther / totalEthnicPopulation) * 100 * 10) / 10;
+  } else {
+    ethnicityPercentages.asianPercent = null;
+    ethnicityPercentages.blackPercent = null;
+    ethnicityPercentages.mixedPercent = null;
+    ethnicityPercentages.whitePercent = null;
+    ethnicityPercentages.otherPercent = null;
+  }
 
   return {
     population: totalPopulation > 0 ? totalPopulation : count * 1600, // Use real data or estimate
@@ -176,7 +212,8 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData) {
     housingRank: averages.housingRank,
     housingDecile: averages.housingDecile,
     environmentRank: averages.environmentRank,
-    environmentDecile: averages.environmentDecile
+    environmentDecile: averages.environmentDecile,
+    ...ethnicityPercentages
   };
 }
 
@@ -352,6 +389,93 @@ function loadLSOAPopulationData() {
   return lsoaPopulation;
 }
 
+// Load and process LSOA ethnicity data
+function loadLSOAEthnicityData() {
+  if (!LSOA_ETHNICITY_PATH) {
+    console.log('LSOA ethnicity data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_ETHNICITY_PATH)) {
+    console.warn(`Warning: LSOA ethnicity file not found: ${LSOA_ETHNICITY_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA ethnicity data from: ${LSOA_ETHNICITY_PATH}...`);
+
+  // Load LSOA ethnicity data
+  let ethContent = fs.readFileSync(LSOA_ETHNICITY_PATH, 'utf8');
+  if (ethContent.charCodeAt(0) === 0xFEFF) {
+    ethContent = ethContent.slice(1);
+  }
+  const ethRecords = parse(ethContent, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${ethRecords.length} LSOA ethnicity records`);
+
+  // Build LSOA ethnicity map: lsoaCode -> { asian, black, mixed, white, other, total }
+  const lsoaEthnicity = {};
+
+  for (const record of ethRecords) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Ethnic group (20 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaEthnicity[lsoaCode]) {
+      lsoaEthnicity[lsoaCode] = {
+        asian: 0,
+        black: 0,
+        mixed: 0,
+        white: 0,
+        other: 0,
+        total: 0
+      };
+    }
+
+    // Group by major ethnic categories
+    if (categoryCode >= 1 && categoryCode <= 5) {
+      // Asian: Bangladeshi, Chinese, Indian, Pakistani, Other Asian
+      lsoaEthnicity[lsoaCode].asian += count;
+    } else if (categoryCode >= 6 && categoryCode <= 8) {
+      // Black: African, Caribbean, Other Black
+      lsoaEthnicity[lsoaCode].black += count;
+    } else if (categoryCode >= 9 && categoryCode <= 12) {
+      // Mixed: White and Asian, White and Black African, White and Black Caribbean, Other Mixed
+      lsoaEthnicity[lsoaCode].mixed += count;
+    } else if (categoryCode >= 13 && categoryCode <= 17) {
+      // White: English/Welsh/Scottish/NI/British, Irish, Gypsy/Irish Traveller, Roma, Other White
+      lsoaEthnicity[lsoaCode].white += count;
+    } else if (categoryCode >= 18 && categoryCode <= 19) {
+      // Other: Arab, Any other ethnic group
+      lsoaEthnicity[lsoaCode].other += count;
+    }
+
+    lsoaEthnicity[lsoaCode].total += count;
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaEthnicity) {
+    const data = lsoaEthnicity[lsoaCode];
+    if (data.total > 0) {
+      data.asianPercent = Math.round((data.asian / data.total) * 100 * 10) / 10;
+      data.blackPercent = Math.round((data.black / data.total) * 100 * 10) / 10;
+      data.mixedPercent = Math.round((data.mixed / data.total) * 100 * 10) / 10;
+      data.whitePercent = Math.round((data.white / data.total) * 100 * 10) / 10;
+      data.otherPercent = Math.round((data.other / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaEthnicity).length} LSOA ethnicity records\n`);
+
+  return lsoaEthnicity;
+}
+
 // Generate events for wards
 function generateEventsForWards(wards) {
   const events = [];
@@ -437,6 +561,9 @@ async function matchWardsFromCSV() {
 
   // Load LSOA population/age data (optional)
   const lsoaPopulationData = loadLSOAPopulationData();
+
+  // Load LSOA ethnicity data (optional)
+  const lsoaEthnicityData = loadLSOAEthnicityData();
 
   // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
@@ -631,7 +758,7 @@ async function matchWardsFromCSV() {
       name: wardName,
       boundary: boundary,
       center: center,
-      demographics: generateDemographics(wardCode, lsoaData, lsoaPopulationData)
+      demographics: generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData)
     };
 
     // Add multiPolygonBoundary if it's a MultiPolygon ward

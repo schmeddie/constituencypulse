@@ -79,8 +79,8 @@ const RightSidebar = ({ constituency, events, mapBounds, demographicData, active
           <h2 className="text-lg font-semibold mb-5 text-dark-grey">Constituency Overview</h2>
 
           <div className="grid grid-cols-2 gap-4">
-            <StatCard value={stats.population.toLocaleString()} label="Total Population" />
-            <StatCard value={stats.voters.toLocaleString()} label="Registered Voters" />
+            <StatCard value={stats.population.toLocaleString()} label="Total Population" sublabel="(estimated)" />
+            <StatCard value={stats.voters.toLocaleString()} label="Registered Voters" sublabel="(estimated)" />
             <StatCard value={`${stats.turnout}%`} label="Turnout (2024)" />
             <StatCard value={`£${stats.medianIncome.toLocaleString()}`} label="Median Income" />
           </div>
@@ -138,10 +138,13 @@ const RightSidebar = ({ constituency, events, mapBounds, demographicData, active
   );
 };
 
-const StatCard = ({ value, label }) => (
+const StatCard = ({ value, label, sublabel }) => (
   <div className="bg-light-grey p-4 rounded-lg text-center">
     <div className="text-2xl font-bold text-primary-blue mb-1">{value}</div>
-    <div className="text-xs text-medium-grey font-medium">{label}</div>
+    <div className="text-xs text-medium-grey font-medium">
+      {label}
+      {sublabel && <span className="block text-xxs text-gray-400 mt-0.5">{sublabel}</span>}
+    </div>
   </div>
 );
 
