@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 
 const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
+  const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
+  const ethnicityTriggerRef = useRef(null);
 
   const categories = [
     { id: 'all', label: 'All', color: 'bg-primary-blue' },
@@ -11,6 +13,14 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
     { id: 'housing', label: 'Housing', color: 'bg-purple-500' },
     { id: 'environment', label: 'Environment', color: 'bg-emerald-500' },
   ];
+
+  const handleEthnicityMouseEnter = () => {
+    if (ethnicityTriggerRef.current) {
+      const rect = ethnicityTriggerRef.current.getBoundingClientRect();
+      setSubmenuPosition({ top: rect.top });
+      setExpandedSubmenu('ethnicity');
+    }
+  };
 
   return (
     <aside className="w-72 bg-white border-r border-border-grey shadow-md flex flex-col">
@@ -92,8 +102,9 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
           </h3>
           <div className="space-y-2 overflow-visible">
             <div
+              ref={ethnicityTriggerRef}
               className="relative overflow-visible"
-              onMouseEnter={() => setExpandedSubmenu('ethnicity')}
+              onMouseEnter={handleEthnicityMouseEnter}
               onMouseLeave={() => setExpandedSubmenu(null)}
             >
               <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
@@ -101,7 +112,12 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
               </div>
 
               {expandedSubmenu === 'ethnicity' && (
-                <div className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50" style={{top: '200px'}}>
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={() => setExpandedSubmenu('ethnicity')}
+                  onMouseLeave={() => setExpandedSubmenu(null)}
+                >
                   <LayerToggle
                     label="% Asian"
                     checked={activeLayers.ethnicityAsian}
