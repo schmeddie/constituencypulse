@@ -13,31 +13,51 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
       <div className="p-6">
         <h2 className="text-lg font-semibold mb-5 text-dark-grey">Data Layers</h2>
 
-        {/* Demographics Section */}
+        {/* Deprivation Indices Section */}
         <div className="mb-8">
           <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
-            Demographics
+            Deprivation Indices
           </h3>
           <div className="space-y-2">
             <LayerToggle
-              label="Age Distribution"
-              checked={activeLayers.age}
-              onChange={() => onToggleLayer('age')}
+              label="IMD - Overall Deprivation"
+              checked={activeLayers.imd}
+              onChange={() => onToggleLayer('imd')}
             />
             <LayerToggle
-              label="Income Levels"
+              label="Income Deprivation"
               checked={activeLayers.income}
               onChange={() => onToggleLayer('income')}
             />
             <LayerToggle
-              label="Education"
+              label="Education Deprivation"
               checked={activeLayers.education}
               onChange={() => onToggleLayer('education')}
             />
             <LayerToggle
-              label="Employment"
+              label="Employment Deprivation"
               checked={activeLayers.employment}
               onChange={() => onToggleLayer('employment')}
+            />
+            <LayerToggle
+              label="Health Deprivation"
+              checked={activeLayers.health}
+              onChange={() => onToggleLayer('health')}
+            />
+            <LayerToggle
+              label="Crime Levels"
+              checked={activeLayers.crime}
+              onChange={() => onToggleLayer('crime')}
+            />
+            <LayerToggle
+              label="Housing Barriers"
+              checked={activeLayers.housing}
+              onChange={() => onToggleLayer('housing')}
+            />
+            <LayerToggle
+              label="Living Environment"
+              checked={activeLayers.environment}
+              onChange={() => onToggleLayer('environment')}
             />
           </div>
         </div>
