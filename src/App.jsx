@@ -226,7 +226,7 @@ function App() {
         </main>
 
         <RightSidebar
-          constituency={constituency}
+          constituency={constituencyData}
           events={visibleEvents}
           mapBounds={mapBounds}
           demographicData={demographicData}
