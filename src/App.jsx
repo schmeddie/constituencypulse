@@ -4,11 +4,10 @@ import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import InteractiveMap from './components/InteractiveMap';
 import LoadingSpinner from './components/LoadingSpinner';
-import { fetchConstituencyBoundary, fetchConstituencyWards, geojsonToLeafletCoords, getGeojsonCenter } from './services/mapitApi';
 
 // Import data
 import eventsData from './data/events.json';
-import constituencyDataFallback from './data/constituencies.json';
+import constituencyData from './data/constituencies.json';
 import ageData from './data/demographics/age.json';
 import incomeData from './data/demographics/income.json';
 import educationData from './data/demographics/education.json';
@@ -16,9 +15,8 @@ import employmentData from './data/demographics/employment.json';
 
 function App() {
   const [events, setEvents] = useState(eventsData);
-  const [constituency, setConstituency] = useState(null);
-  const [wards, setWards] = useState([]);
-  const [isLoadingBoundaries, setIsLoadingBoundaries] = useState(true);
+  const [constituency, setConstituency] = useState(constituencyData);
+  const [wards, setWards] = useState(constituencyData.wards || []);
   const [activeLayers, setActiveLayers] = useState({
     events: true,
     age: false,
@@ -38,59 +36,6 @@ function App() {
     education: educationData,
     employment: employmentData,
   });
-
-  // Fetch real constituency and ward boundaries from MapIt API
-  useEffect(() => {
-    const loadBoundaries = async () => {
-      try {
-        setIsLoadingBoundaries(true);
-
-        // Loughborough constituency code
-        const constituencyCode = '65711'; // WMC:65711
-
-        // Fetch constituency boundary
-        const constituencyData = await fetchConstituencyBoundary(constituencyCode);
-        const constituencyCoords = geojsonToLeafletCoords(constituencyData.geometry);
-        const center = getGeojsonCenter(constituencyData.geometry);
-
-        setConstituency({
-          id: constituencyData.id,
-          name: constituencyData.name,
-          boundary: constituencyCoords[0] || constituencyCoords, // Take outer ring
-          center: center,
-          geometry: constituencyData.geometry,
-        });
-
-        // Fetch wards
-        const wardsData = await fetchConstituencyWards(constituencyCode);
-        const processedWards = wardsData.map((ward, index) => {
-          const wardCoords = geojsonToLeafletCoords(ward.geometry);
-          return {
-            id: ward.id,
-            name: ward.name,
-            boundary: wardCoords[0] || wardCoords,
-            geometry: ward.geometry,
-            // Estimate population and voters (real data would come from census)
-            population: 10000 + Math.floor(Math.random() * 5000),
-            voters: 7500 + Math.floor(Math.random() * 3000),
-          };
-        });
-
-        setWards(processedWards);
-        setIsLoadingBoundaries(false);
-      } catch (error) {
-        console.error('Failed to load boundaries from MapIt API:', error);
-        console.log('Falling back to dummy data...');
-
-        // Fallback to dummy data
-        setConstituency(constituencyDataFallback);
-        setWards(constituencyDataFallback.wards || []);
-        setIsLoadingBoundaries(false);
-      }
-    };
-
-    loadBoundaries();
-  }, []);
 
   // Filter events by category
   useEffect(() => {
@@ -168,22 +113,6 @@ function App() {
 
     setVisibleEvents(searchResults);
   };
-
-  // Show loading screen while fetching boundaries
-  if (isLoadingBoundaries || !constituency) {
-    return (
-      <div className="h-screen flex flex-col bg-light-grey">
-        <Header onSearch={handleSearch} />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <LoadingSpinner />
-            <p className="mt-4 text-medium-grey">Loading constituency boundaries...</p>
-            <p className="text-sm text-medium-grey mt-2">Fetching data from MapIt API</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen flex flex-col bg-light-grey">
