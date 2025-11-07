@@ -221,6 +221,7 @@ function App() {
           <MapDashboard
             activeLayers={activeLayers}
             visibleEvents={visibleEvents}
+            constituencyData={constituencyData}
           />
         </main>
 

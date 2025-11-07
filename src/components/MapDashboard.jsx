@@ -1,7 +1,6 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
-import Map, { Source, Layer } from 'react-map-gl';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import bexhillBattleData from '../data/bexhill-battle.json';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -44,32 +43,50 @@ const getColorForEmployment = (employed) => {
   return '#c2410c';
 };
 
-const MapDashboard = ({ activeLayers, visibleEvents }) => {
+const MapDashboard = ({ activeLayers, visibleEvents, constituencyData }) => {
   const mapRef = useRef();
-  const [viewState, setViewState] = useState({
-    longitude: bexhillBattleData.constituency.center[1],
-    latitude: bexhillBattleData.constituency.center[0],
-    zoom: bexhillBattleData.constituency.zoom
-  });
   const [hoveredWardId, setHoveredWardId] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  // Initialize viewport based on constituency data
+  const [viewState, setViewState] = useState({
+    longitude: constituencyData?.constituency?.center?.[1] || 0,
+    latitude: constituencyData?.constituency?.center?.[0] || 0,
+    zoom: constituencyData?.constituency?.zoom || 11
+  });
+
+  // Update viewport when constituency changes
+  useEffect(() => {
+    if (constituencyData?.constituency?.center) {
+      setViewState({
+        longitude: constituencyData.constituency.center[1],
+        latitude: constituencyData.constituency.center[0],
+        zoom: constituencyData.constituency.zoom || 11
+      });
+    }
+  }, [constituencyData]);
 
   // Convert constituency boundary to GeoJSON
   const constituencyGeoJSON = useMemo(() => {
+    if (!constituencyData?.constituency) return null;
+
+    const constituency = constituencyData.constituency;
+
     // Check if we have multiPolygon boundary (real data) or simple boundary (mock data)
-    if (bexhillBattleData.constituency.multiPolygonBoundary) {
+    if (constituency.multiPolygonBoundary) {
       // Real boundary data - already in correct [lat, lng] format
       return {
         type: 'FeatureCollection',
         features: [{
           type: 'Feature',
-          id: bexhillBattleData.constituency.id,
+          id: constituency.id,
           properties: {
-            name: bexhillBattleData.constituency.name
+            name: constituency.name
           },
           geometry: {
             type: 'MultiPolygon',
             // Convert [lat, lng] to [lng, lat] for GeoJSON
-            coordinates: bexhillBattleData.constituency.multiPolygonBoundary.map(polygon =>
+            coordinates: constituency.multiPolygonBoundary.map(polygon =>
               polygon.map(ring =>
                 ring.map(coord => [coord[1], coord[0]])
               )
@@ -77,34 +94,43 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
           }
         }]
       };
-    } else {
+    } else if (constituency.boundary) {
       // Fallback to simple boundary (mock data)
       return {
         type: 'FeatureCollection',
         features: [{
           type: 'Feature',
-          id: bexhillBattleData.constituency.id,
+          id: constituency.id,
           properties: {
-            name: bexhillBattleData.constituency.name
+            name: constituency.name
           },
           geometry: {
             type: 'Polygon',
-            coordinates: [convertBoundaryToGeoJSON(bexhillBattleData.constituency.boundary)]
+            coordinates: [convertBoundaryToGeoJSON(constituency.boundary)]
           }
         }]
       };
     }
-  }, []);
+
+    return null;
+  }, [constituencyData]);
 
   // Convert wards to GeoJSON with demographic data
   const wardsGeoJSON = useMemo(() => {
+    if (!constituencyData?.wards) {
+      return {
+        type: 'FeatureCollection',
+        features: []
+      };
+    }
+
     const activeDemographic = ['age', 'income', 'education', 'employment'].find(
-      layer => activeLayers[layer]
+      layer => activeLayers?.[layer]
     );
 
     return {
       type: 'FeatureCollection',
-      features: bexhillBattleData.wards.map((ward, index) => {
+      features: constituencyData.wards.map((ward, index) => {
         let fillColor = 'rgba(200, 200, 200, 0.3)'; // Default light grey
 
         if (activeDemographic) {
@@ -145,7 +171,7 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
         };
       })
     };
-  }, [activeLayers]);
+  }, [constituencyData, activeLayers]);
 
   // Convert events to GeoJSON (only if events layer is active)
   const eventsGeoJSON = useMemo(() => {
@@ -245,9 +271,16 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
     });
 
     if (eventFeatures.length > 0) {
-      const eventTitle = eventFeatures[0].properties.title;
-      const eventCategory = eventFeatures[0].properties.category;
-      console.log('Event clicked:', eventTitle, `(${eventCategory})`);
+      const eventProps = eventFeatures[0].properties;
+      const coords = eventFeatures[0].geometry.coordinates;
+
+      setSelectedEvent({
+        title: eventProps.title,
+        category: eventProps.category,
+        date: eventProps.date,
+        summary: eventProps.summary,
+        coordinates: coords
+      });
       return;
     }
 
@@ -267,6 +300,17 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
   const activeDemographic = ['age', 'income', 'education', 'employment'].find(
     layer => activeLayers?.[layer]
   );
+
+  // Don't render until we have constituency data
+  if (!constituencyData || !constituencyGeoJSON) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#666' }}>
+          <p>Loading map data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -300,46 +344,48 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
         </Source>
 
         {/* Ward Boundaries with Demographics */}
-        <Source
-          id="wards"
-          type="geojson"
-          data={wardsGeoJSON}
-        >
-          {/* Fill layer with demographic colors */}
-          <Layer
-            id="wards-fill"
-            type="fill"
-            paint={{
-              'fill-color': ['get', 'fillColor'],
-              'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                0.8,
-                0.6
-              ]
-            }}
-          />
+        {wardsGeoJSON.features.length > 0 && (
+          <Source
+            id="wards"
+            type="geojson"
+            data={wardsGeoJSON}
+          >
+            {/* Fill layer with demographic colors */}
+            <Layer
+              id="wards-fill"
+              type="fill"
+              paint={{
+                'fill-color': ['get', 'fillColor'],
+                'fill-opacity': [
+                  'case',
+                  ['boolean', ['feature-state', 'hover'], false],
+                  0.8,
+                  0.6
+                ]
+              }}
+            />
 
-          {/* Ward borders */}
-          <Layer
-            id="wards-line"
-            type="line"
-            paint={{
-              'line-color': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                '#333333',
-                '#666666'
-              ],
-              'line-width': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                2,
-                1
-              ]
-            }}
-          />
-        </Source>
+            {/* Ward borders */}
+            <Layer
+              id="wards-line"
+              type="line"
+              paint={{
+                'line-color': [
+                  'case',
+                  ['boolean', ['feature-state', 'hover'], false],
+                  '#333333',
+                  '#666666'
+                ],
+                'line-width': [
+                  'case',
+                  ['boolean', ['feature-state', 'hover'], false],
+                  2,
+                  1
+                ]
+              }}
+            />
+          </Source>
+        )}
 
         {/* Events (only shown if events layer is active) */}
         {activeLayers?.events && eventsGeoJSON.features.length > 0 && (
@@ -369,6 +415,66 @@ const MapDashboard = ({ activeLayers, visibleEvents }) => {
               }}
             />
           </Source>
+        )}
+
+        {/* Event Popup */}
+        {selectedEvent && (
+          <Popup
+            longitude={selectedEvent.coordinates[0]}
+            latitude={selectedEvent.coordinates[1]}
+            anchor="bottom"
+            onClose={() => setSelectedEvent(null)}
+            closeButton={true}
+            closeOnClick={false}
+            style={{ maxWidth: '300px' }}
+          >
+            <div style={{ padding: '8px' }}>
+              <h3 style={{
+                margin: '0 0 8px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#1f2937'
+              }}>
+                {selectedEvent.title}
+              </h3>
+              <div style={{
+                display: 'inline-block',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                backgroundColor: '#f3f4f6',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#4b5563',
+                marginBottom: '8px',
+                textTransform: 'capitalize'
+              }}>
+                {selectedEvent.category}
+              </div>
+              {selectedEvent.date && (
+                <p style={{
+                  margin: '4px 0',
+                  fontSize: '13px',
+                  color: '#6b7280'
+                }}>
+                  📅 {new Date(selectedEvent.date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </p>
+              )}
+              {selectedEvent.summary && (
+                <p style={{
+                  margin: '8px 0 0 0',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  color: '#374151'
+                }}>
+                  {selectedEvent.summary}
+                </p>
+              )}
+            </div>
+          </Popup>
         )}
       </Map>
 
