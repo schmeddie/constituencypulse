@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import CorrelationScatterPlot from './CorrelationScatterPlot';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -880,8 +881,11 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
           fontSize: '14px',
           fontFamily: 'Inter, sans-serif',
-          minWidth: '400px',
-          textAlign: 'center'
+          minWidth: '700px',
+          maxWidth: '900px',
+          textAlign: 'center',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}>
           <div style={{ fontWeight: 700, fontSize: '18px', color: '#1f2937', marginBottom: '8px' }}>
             Spearman's Correlation Analysis
@@ -935,6 +939,9 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             {correlationResults.statistics.supports} wards ({correlationResults.statistics.supportsPercent}%) fall in the expected quadrants for a {correlationResults.statistics.correlationDirection} correlation,
             while {correlationResults.statistics.contradicts} wards ({correlationResults.statistics.contradictsPercent}%) do not.
           </div>
+
+          {/* Scatter Plot Visualization */}
+          <CorrelationScatterPlot correlationResults={correlationResults} />
 
           <button
             onClick={onCloseCorrelation}
