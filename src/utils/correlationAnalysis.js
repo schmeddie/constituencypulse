@@ -9,6 +9,7 @@
 
 /**
  * Get the value for a specific metric from ward demographics
+ * For deprivation deciles, invert them so higher value = more deprivation
  */
 const getMetricValue = (ward, metric) => {
   const demographics = ward.properties || ward.demographics || {};
@@ -31,8 +32,23 @@ const getMetricValue = (ward, metric) => {
     'ethnicityWhite': 'whitePercent',
   };
 
+  // Metrics that use inverted deciles (10 = least deprived, 1 = most deprived)
+  const invertedDecileMetrics = [
+    'imd', 'income', 'education', 'employment',
+    'health', 'crime', 'housing', 'environment'
+  ];
+
   const propertyName = metricMapping[metric] || metric;
-  return demographics[propertyName];
+  let value = demographics[propertyName];
+
+  // Invert decile values so higher number = more deprivation/crime/etc.
+  // Original: decile 1 = most deprived, decile 10 = least deprived
+  // Inverted: decile 10 = most deprived, decile 1 = least deprived
+  if (invertedDecileMetrics.includes(metric) && value !== null && value !== undefined) {
+    value = 11 - value;
+  }
+
+  return value;
 };
 
 /**
