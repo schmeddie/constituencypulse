@@ -99,40 +99,56 @@ export const exportCorrelationToJSON = (correlationResults) => {
 
 /**
  * Take a screenshot of the map
+ * Uses Mapbox GL's built-in canvas export for WebGL compatibility
  */
-export const takeMapScreenshot = async (elementId = 'map-container') => {
+export const takeMapScreenshot = (mapRef) => {
   try {
-    // Dynamically import html2canvas
-    const html2canvas = (await import('html2canvas')).default;
-
-    const element = document.getElementById(elementId) || document.querySelector('.mapboxgl-map');
-
-    if (!element) {
-      console.error('Map element not found');
+    if (!mapRef || !mapRef.current) {
+      console.error('Map reference not found');
+      alert('Unable to capture screenshot: Map not loaded');
       return;
     }
 
-    const canvas = await html2canvas(element, {
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#f3f4f6'
-    });
+    const map = mapRef.current.getMap();
 
-    // Convert to blob and download
+    if (!map) {
+      console.error('Map instance not found');
+      alert('Unable to capture screenshot: Map not ready');
+      return;
+    }
+
+    // Get the map canvas directly from Mapbox GL
+    const canvas = map.getCanvas();
+
+    if (!canvas) {
+      console.error('Map canvas not found');
+      return;
+    }
+
+    // Convert canvas to data URL
     canvas.toBlob((blob) => {
+      if (!blob) {
+        console.error('Failed to create blob from canvas');
+        return;
+      }
+
+      // Create download link
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
 
       link.setAttribute('href', url);
-      link.setAttribute('download', `map_screenshot_${new Date().toISOString().split('T')[0]}.png`);
+      link.setAttribute('download', `constituency_map_${new Date().toISOString().split('T')[0]}.png`);
       link.style.visibility = 'hidden';
 
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
+
+      // Clean up the URL
+      URL.revokeObjectURL(url);
+    }, 'image/png');
   } catch (error) {
     console.error('Error taking screenshot:', error);
-    alert('Screenshot feature requires html2canvas library. Install with: npm install html2canvas');
+    alert('Failed to capture screenshot. Please try again.');
   }
 };

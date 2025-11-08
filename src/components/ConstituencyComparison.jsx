@@ -19,8 +19,8 @@ const ConstituencyComparison = ({ isOpen, onClose, onCompare }) => {
   const loadAvailableConstituencies = async () => {
     setLoading(true);
     try {
-      // Load constituencies.json which contains list of all constituencies
-      const response = await fetch('/data/constituencies.json');
+      // Load constituency index which contains list of all constituencies
+      const response = await fetch('/src/data/constituencies/index.json');
       if (!response.ok) {
         throw new Error('Failed to load constituencies');
       }

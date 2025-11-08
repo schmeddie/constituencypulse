@@ -1097,7 +1097,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
               📦 Export JSON
             </button>
             <button
-              onClick={() => takeMapScreenshot()}
+              onClick={() => takeMapScreenshot(mapRef)}
               style={{
                 padding: '8px 20px',
                 background: '#f59e0b',

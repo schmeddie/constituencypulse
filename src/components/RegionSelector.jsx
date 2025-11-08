@@ -8,27 +8,51 @@ import * as turf from '@turf/turf';
 const RegionSelector = ({ isOpen, onClose, polygon, wardsData }) => {
   const [selectedWards, setSelectedWards] = useState([]);
   const [statistics, setStatistics] = useState(null);
+  const [allEnglandWards, setAllEnglandWards] = useState(null);
 
   useEffect(() => {
-    if (isOpen && polygon && wardsData && wardsData.wards) {
+    if (isOpen) {
+      loadEnglandWards();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && polygon && allEnglandWards) {
       calculateRegionStatistics();
     }
-  }, [isOpen, polygon, wardsData]);
+  }, [isOpen, polygon, allEnglandWards]);
+
+  const loadEnglandWards = async () => {
+    try {
+      const response = await fetch('/data/england-wards.json');
+      if (!response.ok) {
+        throw new Error('Failed to load England wards');
+      }
+      const data = await response.json();
+      setAllEnglandWards(data);
+    } catch (error) {
+      console.error('Error loading England wards:', error);
+      alert('Failed to load ward data for region analysis');
+    }
+  };
 
   const calculateRegionStatistics = () => {
+    if (!allEnglandWards || !allEnglandWards.features) {
+      return;
+    }
+
     // Convert polygon to Turf polygon
     const turfPolygon = turf.polygon([polygon]);
 
     // Find wards whose centers are within the polygon
-    const wardsInRegion = wardsData.wards.filter(ward => {
-      if (!ward.boundary || ward.boundary.length === 0) return false;
+    const wardsInRegion = allEnglandWards.features.filter(wardFeature => {
+      if (!wardFeature.geometry) return false;
 
-      // Calculate ward center point
-      const center = calculateCenter(ward.boundary);
-      const point = turf.point([center[1], center[0]]); // [lng, lat]
+      // Calculate centroid of the ward geometry using Turf
+      const centroid = turf.centroid(wardFeature);
 
-      // Check if point is within polygon
-      return turf.booleanPointInPolygon(point, turfPolygon);
+      // Check if centroid is within drawn polygon
+      return turf.booleanPointInPolygon(centroid, turfPolygon);
     });
 
     setSelectedWards(wardsInRegion);
@@ -54,8 +78,8 @@ const RegionSelector = ({ isOpen, onClose, polygon, wardsData }) => {
     let housingSum = 0, housingCount = 0;
     let environmentSum = 0, environmentCount = 0;
 
-    wardsInRegion.forEach(ward => {
-      const demo = ward.demographics || {};
+    wardsInRegion.forEach(wardFeature => {
+      const demo = wardFeature.properties || {};
 
       if (demo.population) totalPopulation += demo.population;
       if (demo.averageAge) {
@@ -166,14 +190,17 @@ const RegionSelector = ({ isOpen, onClose, polygon, wardsData }) => {
                 <h3 className="text-lg font-semibold text-dark-grey mb-3">Wards in Region</h3>
                 <div className="max-h-60 overflow-y-auto border border-border-grey rounded-lg">
                   <div className="divide-y divide-border-grey">
-                    {selectedWards.map((ward, index) => (
-                      <div key={ward.id || index} className="p-3 hover:bg-light-grey">
-                        <div className="font-medium text-sm text-dark-grey">{ward.name}</div>
-                        <div className="text-xs text-medium-grey">
-                          Population: {ward.demographics?.population?.toLocaleString() || 'N/A'}
+                    {selectedWards.map((wardFeature, index) => {
+                      const ward = wardFeature.properties || {};
+                      return (
+                        <div key={ward.id || index} className="p-3 hover:bg-light-grey">
+                          <div className="font-medium text-sm text-dark-grey">{ward.name || 'Unknown'}</div>
+                          <div className="text-xs text-medium-grey">
+                            Population: {ward.population?.toLocaleString() || 'N/A'}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

@@ -20,6 +20,14 @@ const CorrelationScatterPlot = ({ correlationResults, onWardClick }) => {
   const meanX = scatterData.reduce((sum, d) => sum + d.x, 0) / scatterData.length;
   const meanY = scatterData.reduce((sum, d) => sum + d.y, 0) / scatterData.length;
 
+  // Calculate data ranges with padding
+  const xValues = scatterData.map(d => d.x);
+  const yValues = scatterData.map(d => d.y);
+  const xMin = Math.max(0, Math.min(...xValues) - 0.5);
+  const xMax = Math.max(...xValues) + 0.5;
+  const yMin = Math.max(0, Math.min(...yValues) - 0.5);
+  const yMax = Math.max(...yValues) + 0.5;
+
   // Custom tooltip
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -59,6 +67,7 @@ const CorrelationScatterPlot = ({ correlationResults, onWardClick }) => {
             name={correlationResults.metric1}
             label={{ value: correlationResults.metric1, position: 'bottom', offset: 0 }}
             stroke="#6b7280"
+            domain={[xMin, xMax]}
           />
           <YAxis
             type="number"
@@ -66,6 +75,7 @@ const CorrelationScatterPlot = ({ correlationResults, onWardClick }) => {
             name={correlationResults.metric2}
             label={{ value: correlationResults.metric2, angle: -90, position: 'left' }}
             stroke="#6b7280"
+            domain={[yMin, yMax]}
           />
           <Tooltip content={<CustomTooltip />} />
 
