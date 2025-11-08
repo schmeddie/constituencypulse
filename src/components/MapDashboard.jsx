@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import Map, { Source, Layer, Popup } from 'react-map-gl';
+import Map, { Source, Layer, Popup, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import CorrelationScatterPlot from './CorrelationScatterPlot';
+import DrawingControls from './DrawingControls';
+import RegionSelector from './RegionSelector';
 import { exportCorrelationToCSV, exportCorrelationToJSON, takeMapScreenshot } from '../utils/exportUtils';
 import { applyFiltersToWards } from '../utils/filterUtils';
 
@@ -77,6 +79,12 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
   const [hoveredWardId, setHoveredWardId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
+
+  // Drawing mode state
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawnPoints, setDrawnPoints] = useState([]);
+  const [drawnPolygon, setDrawnPolygon] = useState(null);
+  const [isRegionSelectorOpen, setIsRegionSelectorOpen] = useState(false);
 
   // Initialize viewport based on constituency data
   const [viewState, setViewState] = useState({
@@ -416,6 +424,28 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
     };
   }, [activeLayers, visibleEvents]);
 
+  // Create GeoJSON for drawn polygon
+  const drawnPolygonGeoJSON = useMemo(() => {
+    if (!drawnPolygon || drawnPolygon.length < 4) {
+      return {
+        type: 'FeatureCollection',
+        features: []
+      };
+    }
+
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [drawnPolygon]
+        }
+      }]
+    };
+  }, [drawnPolygon]);
+
   // Mouse move handler for ward hover effect
   const onMouseMove = useCallback((event) => {
     const map = mapRef.current?.getMap();
@@ -475,10 +505,51 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
     map.getCanvas().style.cursor = '';
   }, [hoveredWardId]);
 
+  // Drawing mode handlers
+  const handleStartDrawing = useCallback(() => {
+    setIsDrawing(true);
+    setDrawnPoints([]);
+    setDrawnPolygon(null);
+    setSelectedWard(null);
+    setSelectedEvent(null);
+  }, []);
+
+  const handleCancelDrawing = useCallback(() => {
+    setIsDrawing(false);
+    setDrawnPoints([]);
+    setDrawnPolygon(null);
+  }, []);
+
+  const handleFinishDrawing = useCallback(() => {
+    if (drawnPoints.length < 3) {
+      alert('Please add at least 3 points to create a region');
+      return;
+    }
+
+    // Close the polygon by adding the first point at the end
+    const closedPolygon = [...drawnPoints, drawnPoints[0]];
+    setDrawnPolygon(closedPolygon);
+    setIsDrawing(false);
+    setIsRegionSelectorOpen(true);
+  }, [drawnPoints]);
+
+  const handleCloseRegionSelector = useCallback(() => {
+    setIsRegionSelectorOpen(false);
+    setDrawnPoints([]);
+    setDrawnPolygon(null);
+  }, []);
+
   // Click handler for wards and events
   const onClick = useCallback((event) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+
+    // Handle drawing mode clicks
+    if (isDrawing) {
+      const { lng, lat } = event.lngLat;
+      setDrawnPoints(prev => [...prev, [lng, lat]]);
+      return;
+    }
 
     // Check for event click first (higher priority)
     const eventFeatures = map.queryRenderedFeatures(event.point, {
@@ -559,7 +630,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
         otherPercent: props.otherPercent
       });
     }
-  }, []);
+  }, [isDrawing]);
 
   // Determine which demographic layer is active for legend/info
   const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity', 'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite'].find(
@@ -871,6 +942,51 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             </div>
           </Popup>
         )}
+
+        {/* Drawn Polygon */}
+        {drawnPolygonGeoJSON.features.length > 0 && (
+          <Source
+            id="drawn-polygon"
+            type="geojson"
+            data={drawnPolygonGeoJSON}
+          >
+            <Layer
+              id="drawn-polygon-fill"
+              type="fill"
+              paint={{
+                'fill-color': '#8b5cf6',
+                'fill-opacity': 0.2
+              }}
+            />
+            <Layer
+              id="drawn-polygon-outline"
+              type="line"
+              paint={{
+                'line-color': '#8b5cf6',
+                'line-width': 3,
+                'line-dasharray': [2, 2]
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Drawing Points */}
+        {drawnPoints.map((point, index) => (
+          <Marker
+            key={index}
+            longitude={point[0]}
+            latitude={point[1]}
+          >
+            <div style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: '#8b5cf6',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+            }} />
+          </Marker>
+        ))}
       </Map>
 
       {/* Correlation Results Overlay */}
@@ -1146,6 +1262,25 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           </div>
         </div>
       )}
+
+      {/* Drawing Controls */}
+      {!correlationResults && (
+        <DrawingControls
+          isDrawing={isDrawing}
+          onStartDrawing={handleStartDrawing}
+          onCancelDrawing={handleCancelDrawing}
+          onFinishDrawing={handleFinishDrawing}
+          pointCount={drawnPoints.length}
+        />
+      )}
+
+      {/* Region Selector Modal */}
+      <RegionSelector
+        isOpen={isRegionSelectorOpen}
+        onClose={handleCloseRegionSelector}
+        polygon={drawnPolygon}
+        wardsData={constituencyData}
+      />
     </div>
   );
 };
