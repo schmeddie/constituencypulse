@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import CorrelationScatterPlot from './CorrelationScatterPlot';
+import { exportCorrelationToCSV, exportCorrelationToJSON, takeMapScreenshot } from '../utils/exportUtils';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -943,6 +944,55 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           {/* Scatter Plot Visualization */}
           <CorrelationScatterPlot correlationResults={correlationResults} />
 
+          {/* Export Buttons */}
+          <div style={{ marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => exportCorrelationToCSV(correlationResults)}
+              style={{
+                padding: '8px 20px',
+                background: '#10b981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '13px'
+              }}
+            >
+              📄 Export CSV
+            </button>
+            <button
+              onClick={() => exportCorrelationToJSON(correlationResults)}
+              style={{
+                padding: '8px 20px',
+                background: '#8b5cf6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '13px'
+              }}
+            >
+              📦 Export JSON
+            </button>
+            <button
+              onClick={() => takeMapScreenshot()}
+              style={{
+                padding: '8px 20px',
+                background: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '13px'
+              }}
+            >
+              📸 Screenshot
+            </button>
+          </div>
+
           <button
             onClick={onCloseCorrelation}
             style={{
@@ -953,7 +1003,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
               borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: 600,
-              fontSize: '14px'
+              fontSize: '14px',
+              marginTop: '16px'
             }}
           >
             Return to Constituency
