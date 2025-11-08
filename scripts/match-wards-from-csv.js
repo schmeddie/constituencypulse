@@ -791,28 +791,36 @@ async function matchWardsFromCSV() {
 
   console.log('\n=== Creating All England Wards GeoJSON ===\n');
 
-  // Create GeoJSON with all wards for correlation analysis
+  // Create GeoJSON with all wards that were matched to English constituencies
   const allWardsFeatures = [];
+  const processedWardCodes = new Set();
 
-  for (const feature of wardsGeoJSON.features) {
-    const properties = feature.properties;
-    const wardCode = properties.WD25CD;
-    const wardName = properties.WD25NM;
+  // Collect all wards from English constituencies
+  for (const constituency of Object.values(constituencies)) {
+    for (const ward of constituency.data.wards) {
+      // Skip if we've already processed this ward (some wards might be in multiple constituencies)
+      if (processedWardCodes.has(ward.id)) {
+        continue;
+      }
+      processedWardCodes.add(ward.id);
 
-    // Get the demographics for this ward
-    const demographics = generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData);
+      // Find the original GeoJSON feature for this ward
+      const originalFeature = wardsGeoJSON.features.find(f => f.properties.WD25CD === ward.id);
 
-    // Create GeoJSON feature with demographics
-    allWardsFeatures.push({
-      type: 'Feature',
-      id: wardCode,
-      properties: {
-        id: wardCode,
-        name: wardName,
-        ...demographics
-      },
-      geometry: feature.geometry
-    });
+      if (originalFeature) {
+        // Create GeoJSON feature with demographics
+        allWardsFeatures.push({
+          type: 'Feature',
+          id: ward.id,
+          properties: {
+            id: ward.id,
+            name: ward.name,
+            ...ward.demographics
+          },
+          geometry: originalFeature.geometry
+        });
+      }
+    }
   }
 
   const allWardsGeoJSON = {
@@ -828,7 +836,7 @@ async function matchWardsFromCSV() {
 
   const englandWardsPath = path.join(publicDataDir, 'england-wards.json');
   fs.writeFileSync(englandWardsPath, JSON.stringify(allWardsGeoJSON, null, 2));
-  console.log(`✓ Created england-wards.json with ${allWardsFeatures.length} wards`);
+  console.log(`✓ Created england-wards.json with ${allWardsFeatures.length} English wards`);
   console.log(`  File saved to: ${englandWardsPath}`);
 
   console.log('\n=== Regenerating events for real wards ===\n');
