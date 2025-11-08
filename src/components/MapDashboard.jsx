@@ -3,6 +3,7 @@ import Map, { Source, Layer, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import CorrelationScatterPlot from './CorrelationScatterPlot';
 import { exportCorrelationToCSV, exportCorrelationToJSON, takeMapScreenshot } from '../utils/exportUtils';
+import { applyFiltersToWards } from '../utils/filterUtils';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -71,7 +72,7 @@ const getColorForCorrelation = (result) => {
   return 'rgba(156, 163, 175, 0.5)'; // Grey - no data/unclear
 };
 
-const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlationResults, onCloseCorrelation }) => {
+const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlationResults, onCloseCorrelation, activeFilters }) => {
   const mapRef = useRef();
   const [hoveredWardId, setHoveredWardId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -175,7 +176,10 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
       return Math.abs(area) * 111 * 71;
     };
 
-    constituencyData.wards.forEach((ward, index) => {
+    // Apply filters to wards
+    const filteredWards = applyFiltersToWards(constituencyData.wards, activeFilters || []);
+
+    filteredWards.forEach((ward, index) => {
       try {
         // Validate ward boundary exists and has enough points
         if (!ward.boundary || !Array.isArray(ward.boundary) || ward.boundary.length < 3) {
@@ -330,7 +334,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
       type: 'FeatureCollection',
       features: features
     };
-  }, [constituencyData, activeLayers]);
+  }, [constituencyData, activeLayers, activeFilters]);
 
   // Create GeoJSON for correlation results (all England wards)
   const correlationWardsGeoJSON = useMemo(() => {

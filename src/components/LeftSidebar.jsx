@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation, onShowRankings }) => {
+const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation, onShowRankings, onShowFilter, activeFiltersCount }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
@@ -67,6 +67,17 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
             className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
           >
             Ward Rankings
+          </button>
+          <button
+            onClick={onShowFilter}
+            className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-sm relative"
+          >
+            Advanced Filter
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
         </div>
 

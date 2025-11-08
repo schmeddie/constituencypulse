@@ -7,6 +7,7 @@ import MapDashboard from './components/MapDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 import CorrelationFinder from './components/CorrelationFinder';
 import WardRankings from './components/WardRankings';
+import AdvancedFilter from './components/AdvancedFilter';
 import { analyzeCorrelation } from './utils/correlationAnalysis';
 
 // Import demographic data (same across all constituencies)
@@ -52,6 +53,10 @@ function App() {
 
   // Ward rankings state
   const [isRankingsOpen, setIsRankingsOpen] = useState(false);
+
+  // Advanced filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState([]);
 
   // Load constituency data when selected
   const handleSelectConstituency = async (constituencyInfo) => {
@@ -243,6 +248,17 @@ function App() {
     setIsRankingsOpen(true);
   };
 
+  // Handler for showing advanced filter
+  const handleShowFilter = () => {
+    setIsFilterOpen(true);
+  };
+
+  // Handler for applying filters
+  const handleApplyFilter = (filters) => {
+    setActiveFilters(filters);
+    setIsFilterOpen(false);
+  };
+
   // Show start screen if no constituency selected
   if (!selectedConstituency) {
     return <StartScreen onSelectConstituency={handleSelectConstituency} />;
@@ -275,6 +291,8 @@ function App() {
           onCategoryChange={handleCategoryChange}
           onFindCorrelation={handleFindCorrelation}
           onShowRankings={handleShowRankings}
+          onShowFilter={handleShowFilter}
+          activeFiltersCount={activeFilters.length}
         />
 
         <main className="flex-1 relative">
@@ -285,6 +303,7 @@ function App() {
             constituencyData={constituencyData}
             correlationResults={correlationResults}
             onCloseCorrelation={handleCloseCorrelation}
+            activeFilters={activeFilters}
           />
         </main>
 
@@ -308,6 +327,13 @@ function App() {
       <WardRankings
         isOpen={isRankingsOpen}
         onClose={() => setIsRankingsOpen(false)}
+      />
+
+      {/* Advanced Filter Modal */}
+      <AdvancedFilter
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilter={handleApplyFilter}
       />
     </div>
   );
