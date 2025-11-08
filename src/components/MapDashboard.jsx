@@ -883,11 +883,31 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           minWidth: '400px',
           textAlign: 'center'
         }}>
-          <div style={{ fontWeight: 700, fontSize: '18px', color: '#1f2937', marginBottom: '12px' }}>
-            Correlation Analysis
+          <div style={{ fontWeight: 700, fontSize: '18px', color: '#1f2937', marginBottom: '8px' }}>
+            Spearman's Correlation Analysis
           </div>
-          <div style={{ color: '#6b7280', marginBottom: '16px', fontSize: '13px' }}>
-            {correlationResults.metric1} vs {correlationResults.metric2} ({correlationResults.correlationType} correlation)
+
+          {/* Spearman's Rho Display */}
+          <div style={{
+            fontSize: '36px',
+            fontWeight: 700,
+            color: correlationResults.statistics.spearmanRho >= 0 ? '#2563eb' : '#dc2626',
+            marginBottom: '8px'
+          }}>
+            ρ = {correlationResults.statistics.spearmanRho.toFixed(3)}
+          </div>
+          <div style={{ color: '#6b7280', marginBottom: '16px', fontSize: '12px' }}>
+            {correlationResults.metric1} vs {correlationResults.metric2}
+            <br/>
+            {correlationResults.statistics.correlationStrength < 0.3 ? 'Weak' :
+             correlationResults.statistics.correlationStrength < 0.7 ? 'Moderate' : 'Strong'}
+            {' '}
+            {correlationResults.statistics.correlationDirection} correlation
+            {!correlationResults.statistics.correlationMatches &&
+              <span style={{ color: '#dc2626', fontWeight: 600 }}>
+                {' '}(Expected {correlationResults.correlationType})
+              </span>
+            }
           </div>
 
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '16px' }}>
@@ -912,8 +932,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           </div>
 
           <div style={{ fontSize: '12px', color: '#4b5563', marginBottom: '16px', lineHeight: '1.5' }}>
-            {correlationResults.statistics.supports} wards ({correlationResults.statistics.supportsPercent}%) show a {correlationResults.correlationType} correlation
-            between {correlationResults.metric1} and {correlationResults.metric2}, while {correlationResults.statistics.contradicts} wards ({correlationResults.statistics.contradictsPercent}%) do not.
+            {correlationResults.statistics.supports} wards ({correlationResults.statistics.supportsPercent}%) fall in the expected quadrants for a {correlationResults.statistics.correlationDirection} correlation,
+            while {correlationResults.statistics.contradicts} wards ({correlationResults.statistics.contradictsPercent}%) do not.
           </div>
 
           <button
