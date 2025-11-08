@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation }) => {
+const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation, onShowRankings }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
@@ -54,13 +54,21 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
       <div className="p-6 overflow-y-auto flex-1">
         <h2 className="text-lg font-semibold mb-5 text-dark-grey">Data Layers</h2>
 
-        {/* Find Correlation Button */}
-        <button
-          onClick={onFindCorrelation}
-          className="w-full mb-6 px-4 py-3 bg-primary-blue text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-sm"
-        >
-          Find Correlation
-        </button>
+        {/* Action Buttons */}
+        <div className="mb-6 space-y-3">
+          <button
+            onClick={onFindCorrelation}
+            className="w-full px-4 py-3 bg-primary-blue text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-sm"
+          >
+            Find Correlation
+          </button>
+          <button
+            onClick={onShowRankings}
+            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+          >
+            Ward Rankings
+          </button>
+        </div>
 
         {/* Deprivation Indices Section */}
         <div className="mb-8">

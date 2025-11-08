@@ -6,6 +6,7 @@ import RightSidebar from './components/RightSidebar';
 import MapDashboard from './components/MapDashboard';
 import LoadingSpinner from './components/LoadingSpinner';
 import CorrelationFinder from './components/CorrelationFinder';
+import WardRankings from './components/WardRankings';
 import { analyzeCorrelation } from './utils/correlationAnalysis';
 
 // Import demographic data (same across all constituencies)
@@ -48,6 +49,9 @@ function App() {
   const [isCorrelationFinderOpen, setIsCorrelationFinderOpen] = useState(false);
   const [correlationResults, setCorrelationResults] = useState(null);
   const [savedViewState, setSavedViewState] = useState(null);
+
+  // Ward rankings state
+  const [isRankingsOpen, setIsRankingsOpen] = useState(false);
 
   // Load constituency data when selected
   const handleSelectConstituency = async (constituencyInfo) => {
@@ -234,6 +238,11 @@ function App() {
     // Restore saved view state will be handled by MapDashboard
   };
 
+  // Handler for showing ward rankings
+  const handleShowRankings = () => {
+    setIsRankingsOpen(true);
+  };
+
   // Show start screen if no constituency selected
   if (!selectedConstituency) {
     return <StartScreen onSelectConstituency={handleSelectConstituency} />;
@@ -265,6 +274,7 @@ function App() {
           onToggleLayer={toggleLayer}
           onCategoryChange={handleCategoryChange}
           onFindCorrelation={handleFindCorrelation}
+          onShowRankings={handleShowRankings}
         />
 
         <main className="flex-1 relative">
@@ -292,6 +302,12 @@ function App() {
         isOpen={isCorrelationFinderOpen}
         onClose={() => setIsCorrelationFinderOpen(false)}
         onAnalyze={handleAnalyzeCorrelation}
+      />
+
+      {/* Ward Rankings Modal */}
+      <WardRankings
+        isOpen={isRankingsOpen}
+        onClose={() => setIsRankingsOpen(false)}
       />
     </div>
   );
