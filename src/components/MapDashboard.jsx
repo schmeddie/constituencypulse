@@ -1,10 +1,8 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import Map, { Source, Layer, Popup, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import CorrelationScatterPlot from './CorrelationScatterPlot';
 import DrawingControls from './DrawingControls';
 import RegionSelector from './RegionSelector';
-import { exportCorrelationToCSV, exportCorrelationToJSON, takeMapScreenshot } from '../utils/exportUtils';
 import { applyFiltersToWards } from '../utils/filterUtils';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
@@ -1056,61 +1054,9 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', color: '#4b5563', marginBottom: '16px', lineHeight: '1.5' }}>
+          <div style={{ fontSize: '12px', color: '#4b5563', marginBottom: '24px', lineHeight: '1.5' }}>
             {correlationResults.statistics.supports} wards ({correlationResults.statistics.supportsPercent}%) fall in the expected quadrants for a {correlationResults.statistics.correlationDirection} correlation,
             while {correlationResults.statistics.contradicts} wards ({correlationResults.statistics.contradictsPercent}%) do not.
-          </div>
-
-          {/* Scatter Plot Visualization */}
-          <CorrelationScatterPlot correlationResults={correlationResults} />
-
-          {/* Export Buttons */}
-          <div style={{ marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => exportCorrelationToCSV(correlationResults)}
-              style={{
-                padding: '8px 20px',
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '13px'
-              }}
-            >
-              📄 Export CSV
-            </button>
-            <button
-              onClick={() => exportCorrelationToJSON(correlationResults)}
-              style={{
-                padding: '8px 20px',
-                background: '#8b5cf6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '13px'
-              }}
-            >
-              📦 Export JSON
-            </button>
-            <button
-              onClick={() => takeMapScreenshot(mapRef)}
-              style={{
-                padding: '8px 20px',
-                background: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '13px'
-              }}
-            >
-              📸 Screenshot
-            </button>
           </div>
 
           <button
