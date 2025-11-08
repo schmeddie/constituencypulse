@@ -8,6 +8,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import CorrelationFinder from './components/CorrelationFinder';
 import WardRankings from './components/WardRankings';
 import AdvancedFilter from './components/AdvancedFilter';
+import ConstituencyComparison from './components/ConstituencyComparison';
+import ComparisonView from './components/ComparisonView';
 import { analyzeCorrelation } from './utils/correlationAnalysis';
 
 // Import demographic data (same across all constituencies)
@@ -57,6 +59,10 @@ function App() {
   // Advanced filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
+
+  // Constituency comparison state
+  const [isComparisonSelectorOpen, setIsComparisonSelectorOpen] = useState(false);
+  const [comparisonConstituencies, setComparisonConstituencies] = useState(null);
 
   // Load constituency data when selected
   const handleSelectConstituency = async (constituencyInfo) => {
@@ -259,6 +265,22 @@ function App() {
     setIsFilterOpen(false);
   };
 
+  // Handler for opening comparison selector
+  const handleShowComparison = () => {
+    setIsComparisonSelectorOpen(true);
+  };
+
+  // Handler for starting comparison
+  const handleStartComparison = (constituencies) => {
+    setComparisonConstituencies(constituencies);
+    setIsComparisonSelectorOpen(false);
+  };
+
+  // Handler for closing comparison
+  const handleCloseComparison = () => {
+    setComparisonConstituencies(null);
+  };
+
   // Show start screen if no constituency selected
   if (!selectedConstituency) {
     return <StartScreen onSelectConstituency={handleSelectConstituency} />;
@@ -293,6 +315,7 @@ function App() {
           onShowRankings={handleShowRankings}
           onShowFilter={handleShowFilter}
           activeFiltersCount={activeFilters.length}
+          onShowComparison={handleShowComparison}
         />
 
         <main className="flex-1 relative">
@@ -335,6 +358,21 @@ function App() {
         onClose={() => setIsFilterOpen(false)}
         onApplyFilter={handleApplyFilter}
       />
+
+      {/* Constituency Comparison Selector */}
+      <ConstituencyComparison
+        isOpen={isComparisonSelectorOpen}
+        onClose={() => setIsComparisonSelectorOpen(false)}
+        onCompare={handleStartComparison}
+      />
+
+      {/* Comparison View (Full Screen) */}
+      {comparisonConstituencies && (
+        <ComparisonView
+          constituencies={comparisonConstituencies}
+          onClose={handleCloseComparison}
+        />
+      )}
     </div>
   );
 }
