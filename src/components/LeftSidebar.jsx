@@ -4,6 +4,11 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
+  const economicActivityTriggerRef = useRef(null);
+  const countryOfBirthTriggerRef = useRef(null);
+  const religionTriggerRef = useRef(null);
+  const housingTenureTriggerRef = useRef(null);
+  const qualificationsTriggerRef = useRef(null);
   const closeTimeoutRef = useRef(null);
 
   const categories = [
@@ -15,21 +20,21 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
     { id: 'environment', label: 'Environment', color: 'bg-emerald-500' },
   ];
 
-  const handleEthnicityMouseEnter = () => {
+  const handleSubmenuTriggerMouseEnter = (menuName, triggerRef) => {
     // Clear any pending close timeout
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
 
-    if (ethnicityTriggerRef.current) {
-      const rect = ethnicityTriggerRef.current.getBoundingClientRect();
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
       setSubmenuPosition({ top: rect.top });
-      setExpandedSubmenu('ethnicity');
+      setExpandedSubmenu(menuName);
     }
   };
 
-  const handleEthnicityMouseLeave = () => {
+  const handleSubmenuTriggerMouseLeave = () => {
     // Delay closing to allow moving to submenu
     closeTimeoutRef.current = setTimeout(() => {
       setExpandedSubmenu(null);
@@ -164,8 +169,8 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
             <div
               ref={ethnicityTriggerRef}
               className="relative overflow-visible"
-              onMouseEnter={handleEthnicityMouseEnter}
-              onMouseLeave={handleEthnicityMouseLeave}
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('ethnicity', ethnicityTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
             >
               <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
                 <span className="text-sm text-dark-grey select-none">Ethnicity Breakdown →</span>
@@ -197,6 +202,234 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
                     label="% White"
                     checked={activeLayers.ethnicityWhite}
                     onChange={() => onToggleLayer('ethnicityWhite')}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Census 2021 Section with Submenus */}
+        <div className="mb-8 overflow-visible">
+          <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
+            Census 2021
+          </h3>
+          <div className="space-y-2 overflow-visible">
+            {/* Economic Activity Submenu */}
+            <div
+              ref={economicActivityTriggerRef}
+              className="relative overflow-visible"
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('economicActivity', economicActivityTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Economic Activity →</span>
+              </div>
+
+              {expandedSubmenu === 'economicActivity' && (
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
+                >
+                  <LayerToggle
+                    label="% Employed"
+                    checked={activeLayers.economicEmployed}
+                    onChange={() => onToggleLayer('economicEmployed')}
+                  />
+                  <LayerToggle
+                    label="% Self-Employed"
+                    checked={activeLayers.economicSelfEmployed}
+                    onChange={() => onToggleLayer('economicSelfEmployed')}
+                  />
+                  <LayerToggle
+                    label="% Unemployed"
+                    checked={activeLayers.economicUnemployed}
+                    onChange={() => onToggleLayer('economicUnemployed')}
+                  />
+                  <LayerToggle
+                    label="% Retired"
+                    checked={activeLayers.economicRetired}
+                    onChange={() => onToggleLayer('economicRetired')}
+                  />
+                  <LayerToggle
+                    label="% Students"
+                    checked={activeLayers.economicStudent}
+                    onChange={() => onToggleLayer('economicStudent')}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Country of Birth Submenu */}
+            <div
+              ref={countryOfBirthTriggerRef}
+              className="relative overflow-visible"
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('countryOfBirth', countryOfBirthTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Country of Birth →</span>
+              </div>
+
+              {expandedSubmenu === 'countryOfBirth' && (
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
+                >
+                  <LayerToggle
+                    label="% UK Born"
+                    checked={activeLayers.ukBorn}
+                    onChange={() => onToggleLayer('ukBorn')}
+                  />
+                  <LayerToggle
+                    label="% EU Born"
+                    checked={activeLayers.euBorn}
+                    onChange={() => onToggleLayer('euBorn')}
+                  />
+                  <LayerToggle
+                    label="% Non-EU Born"
+                    checked={activeLayers.nonEuBorn}
+                    onChange={() => onToggleLayer('nonEuBorn')}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Religion Submenu */}
+            <div
+              ref={religionTriggerRef}
+              className="relative overflow-visible"
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('religion', religionTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Religion →</span>
+              </div>
+
+              {expandedSubmenu === 'religion' && (
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
+                >
+                  <LayerToggle
+                    label="% Christian"
+                    checked={activeLayers.religionChristian}
+                    onChange={() => onToggleLayer('religionChristian')}
+                  />
+                  <LayerToggle
+                    label="% Muslim"
+                    checked={activeLayers.religionMuslim}
+                    onChange={() => onToggleLayer('religionMuslim')}
+                  />
+                  <LayerToggle
+                    label="% Hindu"
+                    checked={activeLayers.religionHindu}
+                    onChange={() => onToggleLayer('religionHindu')}
+                  />
+                  <LayerToggle
+                    label="% Sikh"
+                    checked={activeLayers.religionSikh}
+                    onChange={() => onToggleLayer('religionSikh')}
+                  />
+                  <LayerToggle
+                    label="% Jewish"
+                    checked={activeLayers.religionJewish}
+                    onChange={() => onToggleLayer('religionJewish')}
+                  />
+                  <LayerToggle
+                    label="% No Religion"
+                    checked={activeLayers.religionNone}
+                    onChange={() => onToggleLayer('religionNone')}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Housing Tenure Submenu */}
+            <div
+              ref={housingTenureTriggerRef}
+              className="relative overflow-visible"
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('housingTenure', housingTenureTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Housing Tenure →</span>
+              </div>
+
+              {expandedSubmenu === 'housingTenure' && (
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
+                >
+                  <LayerToggle
+                    label="% Owned Outright"
+                    checked={activeLayers.housingOwnedOutright}
+                    onChange={() => onToggleLayer('housingOwnedOutright')}
+                  />
+                  <LayerToggle
+                    label="% Owned with Mortgage"
+                    checked={activeLayers.housingOwnedMortgage}
+                    onChange={() => onToggleLayer('housingOwnedMortgage')}
+                  />
+                  <LayerToggle
+                    label="% Social Rented"
+                    checked={activeLayers.housingSocialRented}
+                    onChange={() => onToggleLayer('housingSocialRented')}
+                  />
+                  <LayerToggle
+                    label="% Private Rented"
+                    checked={activeLayers.housingPrivateRented}
+                    onChange={() => onToggleLayer('housingPrivateRented')}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Qualifications Submenu */}
+            <div
+              ref={qualificationsTriggerRef}
+              className="relative overflow-visible"
+              onMouseEnter={() => handleSubmenuTriggerMouseEnter('qualifications', qualificationsTriggerRef)}
+              onMouseLeave={handleSubmenuTriggerMouseLeave}
+            >
+              <div className="py-2 px-2 -mx-2 cursor-pointer hover:bg-light-grey rounded-md transition-all">
+                <span className="text-sm text-dark-grey select-none">Qualifications →</span>
+              </div>
+
+              {expandedSubmenu === 'qualifications' && (
+                <div
+                  className="fixed left-72 w-56 bg-white border border-border-grey rounded-lg shadow-lg p-2 z-50"
+                  style={{top: `${submenuPosition.top}px`}}
+                  onMouseEnter={handleSubmenuMouseEnter}
+                  onMouseLeave={handleSubmenuMouseLeave}
+                >
+                  <LayerToggle
+                    label="% No Qualifications"
+                    checked={activeLayers.qualificationsNone}
+                    onChange={() => onToggleLayer('qualificationsNone')}
+                  />
+                  <LayerToggle
+                    label="% Level 1-3"
+                    checked={activeLayers.qualificationsLevel1to3}
+                    onChange={() => onToggleLayer('qualificationsLevel1to3')}
+                  />
+                  <LayerToggle
+                    label="% Level 4+ (Degree)"
+                    checked={activeLayers.qualificationsLevel4Plus}
+                    onChange={() => onToggleLayer('qualificationsLevel4Plus')}
+                  />
+                  <LayerToggle
+                    label="% Apprenticeship"
+                    checked={activeLayers.qualificationsApprenticeship}
+                    onChange={() => onToggleLayer('qualificationsApprenticeship')}
                   />
                 </div>
               )}
