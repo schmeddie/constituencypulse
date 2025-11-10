@@ -30,10 +30,51 @@ function App() {
   const [wards, setWards] = useState([]);
   const [activeLayers, setActiveLayers] = useState({
     events: true,
-    age: false,
+    // Deprivation indices
+    imd: false,
     income: false,
     education: false,
     employment: false,
+    health: false,
+    crime: false,
+    housing: false,
+    environment: false,
+    // Demographics
+    age: false,
+    populationDensity: false,
+    // Ethnicity
+    ethnicityAsian: false,
+    ethnicityBlack: false,
+    ethnicityMixed: false,
+    ethnicityWhite: false,
+    // Economic Activity
+    economicEmployed: false,
+    economicSelfEmployed: false,
+    economicUnemployed: false,
+    economicRetired: false,
+    economicStudent: false,
+    // Country of Birth
+    ukBorn: false,
+    euBorn: false,
+    nonEuBorn: false,
+    // Religion
+    religionChristian: false,
+    religionMuslim: false,
+    religionHindu: false,
+    religionSikh: false,
+    religionJewish: false,
+    religionNone: false,
+    // Housing Tenure
+    housingOwnedOutright: false,
+    housingOwnedMortgage: false,
+    housingSocialRented: false,
+    housingPrivateRented: false,
+    // Qualifications
+    qualificationsNone: false,
+    qualificationsLevel1to3: false,
+    qualificationsLevel4Plus: false,
+    qualificationsApprenticeship: false,
+    // Political
     voting: false,
     turnout: false,
   });
