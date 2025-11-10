@@ -52,6 +52,19 @@ function ensureDataFolder() {
   }
 }
 
+// Ensure constituencies output directory exists
+function ensureConstituenciesDir() {
+  const constituenciesDir = path.join(__dirname, '..', 'src', 'data', 'constituencies');
+
+  if (!fs.existsSync(constituenciesDir)) {
+    console.log('📁 Creating constituencies directory...');
+    fs.mkdirSync(constituenciesDir, { recursive: true });
+    console.log('✅ Created: src/data/constituencies/\n');
+  }
+
+  return constituenciesDir;
+}
+
 // Auto-detect available files
 function detectFiles() {
   console.log('🔍 Detecting available data files...\n');
@@ -176,6 +189,9 @@ async function main() {
   try {
     // Ensure data folder exists
     ensureDataFolder();
+
+    // Ensure constituencies directory exists
+    ensureConstituenciesDir();
 
     // Detect available files
     const detected = detectFiles();
