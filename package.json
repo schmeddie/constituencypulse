@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup": "node scripts/process-all-data.js",
+    "setup:test": "node scripts/process-all-data.js --test"
   },
   "dependencies": {
     "@turf/turf": "^7.2.0",

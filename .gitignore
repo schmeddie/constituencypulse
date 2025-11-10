@@ -29,3 +29,9 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+# Census data files (large CSVs - not committed)
+scripts/data/*.csv
+scripts/data/*.geojson
+# Keep the README
+!scripts/data/README.md
