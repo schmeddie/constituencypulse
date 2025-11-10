@@ -14,6 +14,11 @@ const LSOA_DATA_PATH = process.argv[4]; // Optional: LSOA deprivation data CSV
 const LSOA_WARD_MAPPING_PATH = process.argv[5]; // Optional: LSOA to Ward mapping CSV
 const LSOA_POPULATION_PATH = process.argv[6]; // Optional: LSOA population/age data CSV
 const LSOA_ETHNICITY_PATH = process.argv[7]; // Optional: LSOA ethnicity data CSV
+const LSOA_ECONOMIC_ACTIVITY_PATH = process.argv[8]; // Optional: LSOA economic activity data CSV
+const LSOA_COUNTRY_OF_BIRTH_PATH = process.argv[9]; // Optional: LSOA country of birth data CSV
+const LSOA_RELIGION_PATH = process.argv[10]; // Optional: LSOA religion data CSV
+const LSOA_HOUSING_PATH = process.argv[11]; // Optional: LSOA housing tenure data CSV
+const LSOA_QUALIFICATIONS_PATH = process.argv[12]; // Optional: LSOA qualifications data CSV
 
 // Output directory
 const CONSTITUENCIES_DIR = '../src/data/constituencies';
@@ -36,7 +41,7 @@ const TEST_CONSTITUENCY_NAMES = [
 ];
 
 // Generate demographics from LSOA data or fall back to mock data
-function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData) {
+function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData, lsoaEconomicActivityData, lsoaCountryOfBirthData, lsoaReligionData, lsoaHousingData, lsoaQualificationsData) {
   // If no LSOA data provided, return mock data
   if (!lsoaData || !lsoaData.wardToLSOAs || !lsoaData.lsoaRankings) {
     return {
@@ -103,6 +108,43 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
   let totalWhite = 0;
   let totalOther = 0;
 
+  // Initialize Census 2021 totals
+  let totalEconomicActivity = 0;
+  let totalEmployed = 0;
+  let totalSelfEmployed = 0;
+  let totalUnemployed = 0;
+  let totalStudent = 0;
+  let totalRetired = 0;
+  let totalInactive = 0;
+
+  let totalCountryOfBirth = 0;
+  let totalUkBorn = 0;
+  let totalEuBorn = 0;
+  let totalNonEuBorn = 0;
+
+  let totalReligion = 0;
+  let totalNoReligion = 0;
+  let totalChristian = 0;
+  let totalMuslim = 0;
+  let totalHindu = 0;
+  let totalSikh = 0;
+  let totalJewish = 0;
+  let totalBuddhist = 0;
+  let totalOtherReligion = 0;
+
+  let totalHousing = 0;
+  let totalOwnedOutright = 0;
+  let totalOwnedMortgage = 0;
+  let totalSocialRented = 0;
+  let totalPrivateRented = 0;
+
+  let totalQualifications = 0;
+  let totalNoQualifications = 0;
+  let totalLevel1to3 = 0;
+  let totalLevel4Plus = 0;
+  let totalApprenticeship = 0;
+  let totalOtherQualifications = 0;
+
   // Calculate average ranks across all LSOAs in this ward
   const averages = {
     imdRank: 0,
@@ -164,6 +206,62 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
       totalOther += ethData.other;
       totalEthnicPopulation += ethData.total;
     }
+
+    // Add economic activity data if available
+    if (lsoaEconomicActivityData && lsoaEconomicActivityData[lsoaCode]) {
+      const econData = lsoaEconomicActivityData[lsoaCode];
+      totalEmployed += econData.employed;
+      totalSelfEmployed += econData.selfEmployed;
+      totalUnemployed += econData.unemployed;
+      totalStudent += econData.student;
+      totalRetired += econData.retired;
+      totalInactive += econData.inactive;
+      totalEconomicActivity += econData.total;
+    }
+
+    // Add country of birth data if available
+    if (lsoaCountryOfBirthData && lsoaCountryOfBirthData[lsoaCode]) {
+      const cobData = lsoaCountryOfBirthData[lsoaCode];
+      totalUkBorn += cobData.ukBorn;
+      totalEuBorn += cobData.euBorn;
+      totalNonEuBorn += cobData.nonEuBorn;
+      totalCountryOfBirth += cobData.total;
+    }
+
+    // Add religion data if available
+    if (lsoaReligionData && lsoaReligionData[lsoaCode]) {
+      const relData = lsoaReligionData[lsoaCode];
+      totalNoReligion += relData.noReligion;
+      totalChristian += relData.christian;
+      totalMuslim += relData.muslim;
+      totalHindu += relData.hindu;
+      totalSikh += relData.sikh;
+      totalJewish += relData.jewish;
+      totalBuddhist += relData.buddhist;
+      totalOtherReligion += relData.other;
+      totalReligion += relData.total;
+    }
+
+    // Add housing tenure data if available
+    if (lsoaHousingData && lsoaHousingData[lsoaCode]) {
+      const housingData = lsoaHousingData[lsoaCode];
+      totalOwnedOutright += housingData.ownedOutright;
+      totalOwnedMortgage += housingData.ownedMortgage;
+      totalSocialRented += housingData.socialRented;
+      totalPrivateRented += housingData.privateRented;
+      totalHousing += housingData.total;
+    }
+
+    // Add qualifications data if available
+    if (lsoaQualificationsData && lsoaQualificationsData[lsoaCode]) {
+      const qualData = lsoaQualificationsData[lsoaCode];
+      totalNoQualifications += qualData.noQualifications;
+      totalLevel1to3 += qualData.level1to3;
+      totalLevel4Plus += qualData.level4Plus;
+      totalApprenticeship += qualData.apprenticeship;
+      totalOtherQualifications += qualData.other;
+      totalQualifications += qualData.total;
+    }
   }
 
   // Calculate averages and round to integers
@@ -192,6 +290,88 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
     ethnicityPercentages.otherPercent = null;
   }
 
+  // Calculate economic activity percentages
+  const economicActivityPercentages = {};
+  if (totalEconomicActivity > 0) {
+    economicActivityPercentages.employedPercent = Math.round((totalEmployed / totalEconomicActivity) * 100 * 10) / 10;
+    economicActivityPercentages.selfEmployedPercent = Math.round((totalSelfEmployed / totalEconomicActivity) * 100 * 10) / 10;
+    economicActivityPercentages.unemployedPercent = Math.round((totalUnemployed / totalEconomicActivity) * 100 * 10) / 10;
+    economicActivityPercentages.studentPercent = Math.round((totalStudent / totalEconomicActivity) * 100 * 10) / 10;
+    economicActivityPercentages.retiredPercent = Math.round((totalRetired / totalEconomicActivity) * 100 * 10) / 10;
+    economicActivityPercentages.inactivePercent = Math.round((totalInactive / totalEconomicActivity) * 100 * 10) / 10;
+  } else {
+    economicActivityPercentages.employedPercent = null;
+    economicActivityPercentages.selfEmployedPercent = null;
+    economicActivityPercentages.unemployedPercent = null;
+    economicActivityPercentages.studentPercent = null;
+    economicActivityPercentages.retiredPercent = null;
+    economicActivityPercentages.inactivePercent = null;
+  }
+
+  // Calculate country of birth percentages
+  const countryOfBirthPercentages = {};
+  if (totalCountryOfBirth > 0) {
+    countryOfBirthPercentages.ukBornPercent = Math.round((totalUkBorn / totalCountryOfBirth) * 100 * 10) / 10;
+    countryOfBirthPercentages.euBornPercent = Math.round((totalEuBorn / totalCountryOfBirth) * 100 * 10) / 10;
+    countryOfBirthPercentages.nonEuBornPercent = Math.round((totalNonEuBorn / totalCountryOfBirth) * 100 * 10) / 10;
+  } else {
+    countryOfBirthPercentages.ukBornPercent = null;
+    countryOfBirthPercentages.euBornPercent = null;
+    countryOfBirthPercentages.nonEuBornPercent = null;
+  }
+
+  // Calculate religion percentages
+  const religionPercentages = {};
+  if (totalReligion > 0) {
+    religionPercentages.noReligionPercent = Math.round((totalNoReligion / totalReligion) * 100 * 10) / 10;
+    religionPercentages.christianPercent = Math.round((totalChristian / totalReligion) * 100 * 10) / 10;
+    religionPercentages.muslimPercent = Math.round((totalMuslim / totalReligion) * 100 * 10) / 10;
+    religionPercentages.hinduPercent = Math.round((totalHindu / totalReligion) * 100 * 10) / 10;
+    religionPercentages.sikhPercent = Math.round((totalSikh / totalReligion) * 100 * 10) / 10;
+    religionPercentages.jewishPercent = Math.round((totalJewish / totalReligion) * 100 * 10) / 10;
+    religionPercentages.buddhistPercent = Math.round((totalBuddhist / totalReligion) * 100 * 10) / 10;
+    religionPercentages.otherReligionPercent = Math.round((totalOtherReligion / totalReligion) * 100 * 10) / 10;
+  } else {
+    religionPercentages.noReligionPercent = null;
+    religionPercentages.christianPercent = null;
+    religionPercentages.muslimPercent = null;
+    religionPercentages.hinduPercent = null;
+    religionPercentages.sikhPercent = null;
+    religionPercentages.jewishPercent = null;
+    religionPercentages.buddhistPercent = null;
+    religionPercentages.otherReligionPercent = null;
+  }
+
+  // Calculate housing tenure percentages
+  const housingPercentages = {};
+  if (totalHousing > 0) {
+    housingPercentages.ownedOutrightPercent = Math.round((totalOwnedOutright / totalHousing) * 100 * 10) / 10;
+    housingPercentages.ownedMortgagePercent = Math.round((totalOwnedMortgage / totalHousing) * 100 * 10) / 10;
+    housingPercentages.socialRentedPercent = Math.round((totalSocialRented / totalHousing) * 100 * 10) / 10;
+    housingPercentages.privateRentedPercent = Math.round((totalPrivateRented / totalHousing) * 100 * 10) / 10;
+  } else {
+    housingPercentages.ownedOutrightPercent = null;
+    housingPercentages.ownedMortgagePercent = null;
+    housingPercentages.socialRentedPercent = null;
+    housingPercentages.privateRentedPercent = null;
+  }
+
+  // Calculate qualifications percentages
+  const qualificationsPercentages = {};
+  if (totalQualifications > 0) {
+    qualificationsPercentages.noQualificationsPercent = Math.round((totalNoQualifications / totalQualifications) * 100 * 10) / 10;
+    qualificationsPercentages.level1to3Percent = Math.round((totalLevel1to3 / totalQualifications) * 100 * 10) / 10;
+    qualificationsPercentages.level4PlusPercent = Math.round((totalLevel4Plus / totalQualifications) * 100 * 10) / 10;
+    qualificationsPercentages.apprenticeshipPercent = Math.round((totalApprenticeship / totalQualifications) * 100 * 10) / 10;
+    qualificationsPercentages.otherQualificationsPercent = Math.round((totalOtherQualifications / totalQualifications) * 100 * 10) / 10;
+  } else {
+    qualificationsPercentages.noQualificationsPercent = null;
+    qualificationsPercentages.level1to3Percent = null;
+    qualificationsPercentages.level4PlusPercent = null;
+    qualificationsPercentages.apprenticeshipPercent = null;
+    qualificationsPercentages.otherQualificationsPercent = null;
+  }
+
   return {
     population: totalPopulation > 0 ? totalPopulation : count * 1600, // Use real data or estimate
     averageAge: averageAge,
@@ -213,7 +393,12 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
     housingDecile: averages.housingDecile,
     environmentRank: averages.environmentRank,
     environmentDecile: averages.environmentDecile,
-    ...ethnicityPercentages
+    ...ethnicityPercentages,
+    ...economicActivityPercentages,
+    ...countryOfBirthPercentages,
+    ...religionPercentages,
+    ...housingPercentages,
+    ...qualificationsPercentages
   };
 }
 
@@ -476,6 +661,427 @@ function loadLSOAEthnicityData() {
   return lsoaEthnicity;
 }
 
+// Load and process LSOA economic activity data
+function loadLSOAEconomicActivityData() {
+  if (!LSOA_ECONOMIC_ACTIVITY_PATH) {
+    console.log('LSOA economic activity data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_ECONOMIC_ACTIVITY_PATH)) {
+    console.warn(`Warning: LSOA economic activity file not found: ${LSOA_ECONOMIC_ACTIVITY_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA economic activity data from: ${LSOA_ECONOMIC_ACTIVITY_PATH}...`);
+
+  let content = fs.readFileSync(LSOA_ECONOMIC_ACTIVITY_PATH, 'utf8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${records.length} LSOA economic activity records`);
+
+  const lsoaEconomicActivity = {};
+
+  for (const record of records) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Economic activity status (20 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaEconomicActivity[lsoaCode]) {
+      lsoaEconomicActivity[lsoaCode] = {
+        employed: 0,
+        selfEmployed: 0,
+        unemployed: 0,
+        student: 0,
+        retired: 0,
+        inactive: 0,
+        total: 0
+      };
+    }
+
+    // Group by economic activity status
+    if (categoryCode >= 1 && categoryCode <= 6) {
+      // Economically active (excluding students): employed/self-employed
+      if (categoryCode <= 2) {
+        lsoaEconomicActivity[lsoaCode].employed += count;
+      } else {
+        lsoaEconomicActivity[lsoaCode].selfEmployed += count;
+      }
+    } else if (categoryCode === 7) {
+      // Unemployed
+      lsoaEconomicActivity[lsoaCode].unemployed += count;
+    } else if (categoryCode >= 8 && categoryCode <= 14) {
+      // Students (economically active)
+      lsoaEconomicActivity[lsoaCode].student += count;
+    } else if (categoryCode === 15) {
+      // Retired
+      lsoaEconomicActivity[lsoaCode].retired += count;
+    } else if (categoryCode >= 16 && categoryCode <= 19) {
+      // Economically inactive (other)
+      if (categoryCode === 16) {
+        lsoaEconomicActivity[lsoaCode].student += count; // Students (inactive)
+      } else {
+        lsoaEconomicActivity[lsoaCode].inactive += count;
+      }
+    }
+
+    lsoaEconomicActivity[lsoaCode].total += count;
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaEconomicActivity) {
+    const data = lsoaEconomicActivity[lsoaCode];
+    if (data.total > 0) {
+      data.employedPercent = Math.round((data.employed / data.total) * 100 * 10) / 10;
+      data.selfEmployedPercent = Math.round((data.selfEmployed / data.total) * 100 * 10) / 10;
+      data.unemployedPercent = Math.round((data.unemployed / data.total) * 100 * 10) / 10;
+      data.studentPercent = Math.round((data.student / data.total) * 100 * 10) / 10;
+      data.retiredPercent = Math.round((data.retired / data.total) * 100 * 10) / 10;
+      data.inactivePercent = Math.round((data.inactive / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaEconomicActivity).length} LSOA economic activity records\n`);
+
+  return lsoaEconomicActivity;
+}
+
+// Load and process LSOA country of birth data
+function loadLSOACountryOfBirthData() {
+  if (!LSOA_COUNTRY_OF_BIRTH_PATH) {
+    console.log('LSOA country of birth data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_COUNTRY_OF_BIRTH_PATH)) {
+    console.warn(`Warning: LSOA country of birth file not found: ${LSOA_COUNTRY_OF_BIRTH_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA country of birth data from: ${LSOA_COUNTRY_OF_BIRTH_PATH}...`);
+
+  let content = fs.readFileSync(LSOA_COUNTRY_OF_BIRTH_PATH, 'utf8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${records.length} LSOA country of birth records`);
+
+  const lsoaCountryOfBirth = {};
+
+  for (const record of records) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Country of birth (12 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaCountryOfBirth[lsoaCode]) {
+      lsoaCountryOfBirth[lsoaCode] = {
+        ukBorn: 0,
+        euBorn: 0,
+        nonEuBorn: 0,
+        total: 0
+      };
+    }
+
+    // Group by country of birth
+    if (categoryCode === 1 || categoryCode === 11) {
+      // UK born or British Overseas
+      lsoaCountryOfBirth[lsoaCode].ukBorn += count;
+    } else if (categoryCode >= 2 && categoryCode <= 5) {
+      // EU countries
+      lsoaCountryOfBirth[lsoaCode].euBorn += count;
+    } else if (categoryCode >= 6 && categoryCode <= 10) {
+      // Non-EU countries
+      lsoaCountryOfBirth[lsoaCode].nonEuBorn += count;
+    }
+
+    lsoaCountryOfBirth[lsoaCode].total += count;
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaCountryOfBirth) {
+    const data = lsoaCountryOfBirth[lsoaCode];
+    if (data.total > 0) {
+      data.ukBornPercent = Math.round((data.ukBorn / data.total) * 100 * 10) / 10;
+      data.euBornPercent = Math.round((data.euBorn / data.total) * 100 * 10) / 10;
+      data.nonEuBornPercent = Math.round((data.nonEuBorn / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaCountryOfBirth).length} LSOA country of birth records\n`);
+
+  return lsoaCountryOfBirth;
+}
+
+// Load and process LSOA religion data
+function loadLSOAReligionData() {
+  if (!LSOA_RELIGION_PATH) {
+    console.log('LSOA religion data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_RELIGION_PATH)) {
+    console.warn(`Warning: LSOA religion file not found: ${LSOA_RELIGION_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA religion data from: ${LSOA_RELIGION_PATH}...`);
+
+  let content = fs.readFileSync(LSOA_RELIGION_PATH, 'utf8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${records.length} LSOA religion records`);
+
+  const lsoaReligion = {};
+
+  for (const record of records) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Religion (10 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaReligion[lsoaCode]) {
+      lsoaReligion[lsoaCode] = {
+        noReligion: 0,
+        christian: 0,
+        muslim: 0,
+        hindu: 0,
+        sikh: 0,
+        jewish: 0,
+        buddhist: 0,
+        other: 0,
+        total: 0
+      };
+    }
+
+    // Map to religion categories
+    switch (categoryCode) {
+      case 1: lsoaReligion[lsoaCode].noReligion += count; break;
+      case 2: lsoaReligion[lsoaCode].christian += count; break;
+      case 3: lsoaReligion[lsoaCode].buddhist += count; break;
+      case 4: lsoaReligion[lsoaCode].hindu += count; break;
+      case 5: lsoaReligion[lsoaCode].jewish += count; break;
+      case 6: lsoaReligion[lsoaCode].muslim += count; break;
+      case 7: lsoaReligion[lsoaCode].sikh += count; break;
+      case 8: lsoaReligion[lsoaCode].other += count; break;
+      case 9: /* Not answered - exclude from total */ break;
+    }
+
+    if (categoryCode !== 9) { // Don't count "Not answered" in total
+      lsoaReligion[lsoaCode].total += count;
+    }
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaReligion) {
+    const data = lsoaReligion[lsoaCode];
+    if (data.total > 0) {
+      data.noReligionPercent = Math.round((data.noReligion / data.total) * 100 * 10) / 10;
+      data.christianPercent = Math.round((data.christian / data.total) * 100 * 10) / 10;
+      data.muslimPercent = Math.round((data.muslim / data.total) * 100 * 10) / 10;
+      data.hinduPercent = Math.round((data.hindu / data.total) * 100 * 10) / 10;
+      data.sikhPercent = Math.round((data.sikh / data.total) * 100 * 10) / 10;
+      data.jewishPercent = Math.round((data.jewish / data.total) * 100 * 10) / 10;
+      data.buddhistPercent = Math.round((data.buddhist / data.total) * 100 * 10) / 10;
+      data.otherPercent = Math.round((data.other / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaReligion).length} LSOA religion records\n`);
+
+  return lsoaReligion;
+}
+
+// Load and process LSOA housing tenure data
+function loadLSOAHousingData() {
+  if (!LSOA_HOUSING_PATH) {
+    console.log('LSOA housing tenure data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_HOUSING_PATH)) {
+    console.warn(`Warning: LSOA housing file not found: ${LSOA_HOUSING_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA housing tenure data from: ${LSOA_HOUSING_PATH}...`);
+
+  let content = fs.readFileSync(LSOA_HOUSING_PATH, 'utf8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${records.length} LSOA housing tenure records`);
+
+  const lsoaHousing = {};
+
+  for (const record of records) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Tenure of household (9 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaHousing[lsoaCode]) {
+      lsoaHousing[lsoaCode] = {
+        ownedOutright: 0,
+        ownedMortgage: 0,
+        socialRented: 0,
+        privateRented: 0,
+        total: 0
+      };
+    }
+
+    // Group by housing tenure
+    if (categoryCode === 0) {
+      lsoaHousing[lsoaCode].ownedOutright += count;
+    } else if (categoryCode === 1) {
+      lsoaHousing[lsoaCode].ownedMortgage += count;
+    } else if (categoryCode === 3 || categoryCode === 4) {
+      // Social rented (council or other)
+      lsoaHousing[lsoaCode].socialRented += count;
+    } else if (categoryCode === 5 || categoryCode === 6) {
+      // Private rented
+      lsoaHousing[lsoaCode].privateRented += count;
+    }
+
+    lsoaHousing[lsoaCode].total += count;
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaHousing) {
+    const data = lsoaHousing[lsoaCode];
+    if (data.total > 0) {
+      data.ownedOutrightPercent = Math.round((data.ownedOutright / data.total) * 100 * 10) / 10;
+      data.ownedMortgagePercent = Math.round((data.ownedMortgage / data.total) * 100 * 10) / 10;
+      data.socialRentedPercent = Math.round((data.socialRented / data.total) * 100 * 10) / 10;
+      data.privateRentedPercent = Math.round((data.privateRented / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaHousing).length} LSOA housing tenure records\n`);
+
+  return lsoaHousing;
+}
+
+// Load and process LSOA qualifications data
+function loadLSOAQualificationsData() {
+  if (!LSOA_QUALIFICATIONS_PATH) {
+    console.log('LSOA qualifications data file not provided\n');
+    return null;
+  }
+
+  if (!fs.existsSync(LSOA_QUALIFICATIONS_PATH)) {
+    console.warn(`Warning: LSOA qualifications file not found: ${LSOA_QUALIFICATIONS_PATH}`);
+    return null;
+  }
+
+  console.log(`Loading LSOA qualifications data from: ${LSOA_QUALIFICATIONS_PATH}...`);
+
+  let content = fs.readFileSync(LSOA_QUALIFICATIONS_PATH, 'utf8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  const records = parse(content, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+    bom: true
+  });
+
+  console.log(`Loaded ${records.length} LSOA qualifications records`);
+
+  const lsoaQualifications = {};
+
+  for (const record of records) {
+    const lsoaCode = record['Lower layer Super Output Areas Code'];
+    const categoryCode = parseInt(record['Highest level of qualification (8 categories) Code']);
+    const count = parseInt(record['Observation']) || 0;
+
+    if (!lsoaCode || categoryCode === -8) continue; // Skip "Does not apply"
+
+    if (!lsoaQualifications[lsoaCode]) {
+      lsoaQualifications[lsoaCode] = {
+        noQualifications: 0,
+        level1to3: 0,
+        level4Plus: 0,
+        apprenticeship: 0,
+        other: 0,
+        total: 0
+      };
+    }
+
+    // Group by qualification level
+    if (categoryCode === 0) {
+      lsoaQualifications[lsoaCode].noQualifications += count;
+    } else if (categoryCode >= 1 && categoryCode <= 4) {
+      // Level 1, 2, 3, or apprenticeship
+      if (categoryCode === 3) {
+        lsoaQualifications[lsoaCode].apprenticeship += count;
+      } else {
+        lsoaQualifications[lsoaCode].level1to3 += count;
+      }
+    } else if (categoryCode === 5) {
+      // Level 4+ (degree or higher)
+      lsoaQualifications[lsoaCode].level4Plus += count;
+    } else if (categoryCode === 6) {
+      // Other qualifications
+      lsoaQualifications[lsoaCode].other += count;
+    }
+
+    lsoaQualifications[lsoaCode].total += count;
+  }
+
+  // Calculate percentages
+  for (const lsoaCode in lsoaQualifications) {
+    const data = lsoaQualifications[lsoaCode];
+    if (data.total > 0) {
+      data.noQualificationsPercent = Math.round((data.noQualifications / data.total) * 100 * 10) / 10;
+      data.level1to3Percent = Math.round((data.level1to3 / data.total) * 100 * 10) / 10;
+      data.level4PlusPercent = Math.round((data.level4Plus / data.total) * 100 * 10) / 10;
+      data.apprenticeshipPercent = Math.round((data.apprenticeship / data.total) * 100 * 10) / 10;
+      data.otherPercent = Math.round((data.other / data.total) * 100 * 10) / 10;
+    }
+  }
+
+  console.log(`Processed ${Object.keys(lsoaQualifications).length} LSOA qualifications records\n`);
+
+  return lsoaQualifications;
+}
+
 // Generate events for wards
 function generateEventsForWards(wards) {
   const events = [];
@@ -564,6 +1170,13 @@ async function matchWardsFromCSV() {
 
   // Load LSOA ethnicity data (optional)
   const lsoaEthnicityData = loadLSOAEthnicityData();
+
+  // Load Census 2021 data (optional)
+  const lsoaEconomicActivityData = loadLSOAEconomicActivityData();
+  const lsoaCountryOfBirthData = loadLSOACountryOfBirthData();
+  const lsoaReligionData = loadLSOAReligionData();
+  const lsoaHousingData = loadLSOAHousingData();
+  const lsoaQualificationsData = loadLSOAQualificationsData();
 
   // Load and parse CSV (may be tab-delimited or comma-delimited)
   console.log(`Loading CSV: ${CSV_PATH}...`);
@@ -758,7 +1371,7 @@ async function matchWardsFromCSV() {
       name: wardName,
       boundary: boundary,
       center: center,
-      demographics: generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData)
+      demographics: generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData, lsoaEconomicActivityData, lsoaCountryOfBirthData, lsoaReligionData, lsoaHousingData, lsoaQualificationsData)
     };
 
     // Add multiPolygonBoundary if it's a MultiPolygon ward
