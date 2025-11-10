@@ -65,6 +65,16 @@ const getColorForEthnicity = (percent) => {
   return '#ca8a04'; // Very high - dark gold
 };
 
+// Helper: Get color for generic percentage (0-100%) - blue scale
+const getColorForPercentage = (percent) => {
+  if (!percent && percent !== 0) return 'rgba(200, 200, 200, 0.3)'; // No data
+  if (percent < 10) return '#dbeafe'; // Very low - pale blue
+  if (percent < 25) return '#93c5fd'; // Low - light blue
+  if (percent < 50) return '#60a5fa'; // Medium - blue
+  if (percent < 75) return '#3b82f6'; // High - darker blue
+  return '#2563eb'; // Very high - dark blue
+};
+
 // Helper: Get color for correlation results
 const getColorForCorrelation = (result) => {
   if (result === 'supports') return 'rgba(34, 197, 94, 0.7)'; // Green - supports correlation
@@ -241,6 +251,77 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
               break;
             case 'ethnicityWhite':
               fillColor = getColorForEthnicity(ward.demographics.whitePercent);
+              break;
+            // Economic Activity
+            case 'economicEmployed':
+              fillColor = getColorForPercentage(ward.demographics.employedPercent);
+              break;
+            case 'economicSelfEmployed':
+              fillColor = getColorForPercentage(ward.demographics.selfEmployedPercent);
+              break;
+            case 'economicUnemployed':
+              fillColor = getColorForPercentage(ward.demographics.unemployedPercent);
+              break;
+            case 'economicRetired':
+              fillColor = getColorForPercentage(ward.demographics.retiredPercent);
+              break;
+            case 'economicStudent':
+              fillColor = getColorForPercentage(ward.demographics.studentPercent);
+              break;
+            // Country of Birth
+            case 'ukBorn':
+              fillColor = getColorForPercentage(ward.demographics.ukBornPercent);
+              break;
+            case 'euBorn':
+              fillColor = getColorForPercentage(ward.demographics.euBornPercent);
+              break;
+            case 'nonEuBorn':
+              fillColor = getColorForPercentage(ward.demographics.nonEuBornPercent);
+              break;
+            // Religion
+            case 'religionChristian':
+              fillColor = getColorForPercentage(ward.demographics.christianPercent);
+              break;
+            case 'religionMuslim':
+              fillColor = getColorForPercentage(ward.demographics.muslimPercent);
+              break;
+            case 'religionHindu':
+              fillColor = getColorForPercentage(ward.demographics.hinduPercent);
+              break;
+            case 'religionSikh':
+              fillColor = getColorForPercentage(ward.demographics.sikhPercent);
+              break;
+            case 'religionJewish':
+              fillColor = getColorForPercentage(ward.demographics.jewishPercent);
+              break;
+            case 'religionNone':
+              fillColor = getColorForPercentage(ward.demographics.noReligionPercent);
+              break;
+            // Housing Tenure
+            case 'housingOwnedOutright':
+              fillColor = getColorForPercentage(ward.demographics.ownedOutrightPercent);
+              break;
+            case 'housingOwnedMortgage':
+              fillColor = getColorForPercentage(ward.demographics.ownedMortgagePercent);
+              break;
+            case 'housingSocialRented':
+              fillColor = getColorForPercentage(ward.demographics.socialRentedPercent);
+              break;
+            case 'housingPrivateRented':
+              fillColor = getColorForPercentage(ward.demographics.privateRentedPercent);
+              break;
+            // Qualifications
+            case 'qualificationsNone':
+              fillColor = getColorForPercentage(ward.demographics.noQualificationsPercent);
+              break;
+            case 'qualificationsLevel1to3':
+              fillColor = getColorForPercentage(ward.demographics.level1to3Percent);
+              break;
+            case 'qualificationsLevel4Plus':
+              fillColor = getColorForPercentage(ward.demographics.level4PlusPercent);
+              break;
+            case 'qualificationsApprenticeship':
+              fillColor = getColorForPercentage(ward.demographics.apprenticeshipPercent);
               break;
           }
         }
