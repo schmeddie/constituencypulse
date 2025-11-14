@@ -96,7 +96,8 @@ function averageResultsFromSimilarWards(similarWards, wardResults2024Map) {
   let totalWeight = 0;
 
   for (const { ward, similarity } of similarWards) {
-    const result2024 = wardResults2024Map[ward.id];
+    // Try matching by ID first, then by name
+    const result2024 = wardResults2024Map[ward.id] || wardResults2024Map[ward.name];
     if (result2024) {
       // Weight by similarity (higher similarity = more influence)
       const weight = similarity / 100;
@@ -164,19 +165,29 @@ const constituencyPolling2025 = parse(constituencyPolling2025CSV, {
 });
 console.log(`✓ Loaded polling for ${constituencyPolling2025.length} constituencies\n`);
 
-// Create lookup maps
+// Create lookup maps - index by BOTH ward code AND ward name for flexibility
 const wardResults2024Map = {};
 wardResults2024.forEach(row => {
   const wardCode = row['Ward code']?.trim();
+  const wardName = row['Ward name']?.trim();
+
+  const result = {
+    labour: parseFloat(row['LAB']) || 0,
+    conservative: parseFloat(row['CON']) || 0,
+    libdem: parseFloat(row['LD']) || 0,
+    green: parseFloat(row['GREEN']) || 0,
+    reform: parseFloat(row['REF']) || 0,
+    independent: parseFloat(row['IND']) || 0
+  };
+
+  // Index by ward code (ONS code)
   if (wardCode) {
-    wardResults2024Map[wardCode] = {
-      labour: parseFloat(row['LAB']) || 0,
-      conservative: parseFloat(row['CON']) || 0,
-      libdem: parseFloat(row['LD']) || 0,
-      green: parseFloat(row['GREEN']) || 0,
-      reform: parseFloat(row['REF']) || 0,
-      independent: parseFloat(row['IND']) || 0
-    };
+    wardResults2024Map[wardCode] = result;
+  }
+
+  // Also index by ward name (for matching when codes don't align)
+  if (wardName) {
+    wardResults2024Map[wardName] = result;
   }
 });
 
@@ -280,7 +291,8 @@ function calculate2024ConstituencyAggregate(wards, wardResults2024Map) {
 
   let wardsWithData = 0;
   wards.forEach(ward => {
-    const wardResult = wardResults2024Map[ward.id];
+    // Try matching by ID first, then by name
+    const wardResult = wardResults2024Map[ward.id] || wardResults2024Map[ward.name];
     if (wardResult) {
       const wardTotal = Object.values(wardResult).reduce((sum, v) => sum + v, 0);
       if (wardTotal > 0) {
@@ -351,7 +363,8 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
   let wardsWithConstituencyAvg = 0;
 
   constituencyData.wards.forEach(ward => {
-    const wardResult2024 = wardResults2024Map[ward.id];
+    // Try matching by ID first, then by name
+    const wardResult2024 = wardResults2024Map[ward.id] || wardResults2024Map[ward.name];
     let baseline2024;
     let dataSource;
     let similarWardsInfo = null;
@@ -551,7 +564,8 @@ files.forEach(file => {
 
   if (constituencyData.wards) {
     constituencyData.wards.forEach(ward => {
-      if (wardResults2024Map[ward.id]) {
+      // Try matching by ID first, then by name
+      if (wardResults2024Map[ward.id] || wardResults2024Map[ward.name]) {
         allWardsWithData.push({
           id: ward.id,
           name: ward.name,
