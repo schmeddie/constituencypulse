@@ -562,19 +562,22 @@ files.forEach(file => {
   const filePath = path.join(constituenciesDir, file);
   const constituencyData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
-  if (constituencyData.wards) {
-    constituencyData.wards.forEach(ward => {
-      // Try matching by ID first, then by name
-      if (wardResults2024Map[ward.id] || wardResults2024Map[ward.name]) {
-        allWardsWithData.push({
-          id: ward.id,
-          name: ward.name,
-          constituency: constituencyData.constituency.name,
-          demographics: ward.demographics
-        });
-      }
-    });
+  // Skip files without expected structure
+  if (!constituencyData.constituency || !constituencyData.wards) {
+    return;
   }
+
+  constituencyData.wards.forEach(ward => {
+    // Try matching by ID first, then by name
+    if (wardResults2024Map[ward.id] || wardResults2024Map[ward.name]) {
+      allWardsWithData.push({
+        id: ward.id,
+        name: ward.name,
+        constituency: constituencyData.constituency.name,
+        demographics: ward.demographics
+      });
+    }
+  });
 });
 
 console.log(`✓ Found ${allWardsWithData.length} wards with 2024 election data\n`);
@@ -587,6 +590,13 @@ let skippedCount = 0;
 files.forEach(file => {
   const filePath = path.join(constituenciesDir, file);
   const constituencyData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  // Skip files without expected structure
+  if (!constituencyData.constituency || !constituencyData.constituency.name || !constituencyData.wards) {
+    console.log(`  ⚠ Skipping ${file} - invalid structure`);
+    skippedCount++;
+    return;
+  }
 
   const success = processPredictions(
     constituencyData,
