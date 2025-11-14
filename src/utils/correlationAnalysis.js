@@ -30,6 +30,33 @@ const getMetricValue = (ward, metric) => {
     'ethnicityBlack': 'blackPercent',
     'ethnicityMixed': 'mixedPercent',
     'ethnicityWhite': 'whitePercent',
+    // Economic Activity
+    'economicEmployed': 'employedPercent',
+    'economicSelfEmployed': 'selfEmployedPercent',
+    'economicUnemployed': 'unemployedPercent',
+    'economicRetired': 'retiredPercent',
+    'economicStudent': 'studentPercent',
+    // Country of Birth
+    'ukBorn': 'ukBornPercent',
+    'euBorn': 'euBornPercent',
+    'nonEuBorn': 'nonEuBornPercent',
+    // Religion
+    'religionChristian': 'christianPercent',
+    'religionMuslim': 'muslimPercent',
+    'religionHindu': 'hinduPercent',
+    'religionSikh': 'sikhPercent',
+    'religionJewish': 'jewishPercent',
+    'religionNone': 'noReligionPercent',
+    // Housing Tenure
+    'housingOwnedOutright': 'ownedOutrightPercent',
+    'housingOwnedMortgage': 'ownedMortgagePercent',
+    'housingSocialRented': 'socialRentedPercent',
+    'housingPrivateRented': 'privateRentedPercent',
+    // Qualifications
+    'qualificationsNone': 'noQualificationsPercent',
+    'qualificationsLevel1to3': 'level1to3Percent',
+    'qualificationsLevel4Plus': 'level4PlusPercent',
+    'qualificationsApprenticeship': 'apprenticeshipPercent',
   };
 
   // Metrics that use inverted deciles (10 = least deprived, 1 = most deprived)
