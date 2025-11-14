@@ -1,0 +1,103 @@
+{
+  "description": "Demographic weights for predicting party vote share changes. Positive values increase susceptibility to gains, negative values decrease it.",
+  "weights": {
+    "Labour": {
+      "age": -0.15,
+      "retiredPercent": -0.2,
+      "unemployedPercent": 0.35,
+      "studentPercent": 0.25,
+      "socialRentedPercent": 0.4,
+      "privateRentedPercent": 0.15,
+      "ownedOutrightPercent": -0.2,
+      "level4PlusPercent": 0.15,
+      "noQualificationsPercent": 0.1,
+      "asianPercent": 0.2,
+      "blackPercent": 0.3,
+      "nonEuBornPercent": 0.2,
+      "muslimPercent": 0.25,
+      "hinduPercent": 0.15,
+      "imdDecile": 0.25,
+      "whitePercent": -0.1
+    },
+    "Conservative": {
+      "age": 0.4,
+      "retiredPercent": 0.45,
+      "selfEmployedPercent": 0.2,
+      "employedPercent": 0.1,
+      "ownedOutrightPercent": 0.35,
+      "ownedMortgagePercent": 0.15,
+      "level4PlusPercent": 0.05,
+      "level1to3Percent": 0.1,
+      "whitePercent": 0.15,
+      "ukBornPercent": 0.15,
+      "christianPercent": 0.2,
+      "imdDecile": -0.3,
+      "unemployedPercent": -0.35,
+      "socialRentedPercent": -0.4,
+      "studentPercent": -0.25
+    },
+    "Reform": {
+      "age": 0.35,
+      "retiredPercent": 0.3,
+      "unemployedPercent": 0.2,
+      "noQualificationsPercent": 0.4,
+      "level1to3Percent": 0.25,
+      "whitePercent": 0.4,
+      "ukBornPercent": 0.35,
+      "ownedOutrightPercent": 0.2,
+      "socialRentedPercent": 0.15,
+      "christianPercent": 0.15,
+      "noReligionPercent": 0.1,
+      "imdDecile": 0.2,
+      "level4PlusPercent": -0.45,
+      "studentPercent": -0.4,
+      "nonEuBornPercent": -0.35,
+      "asianPercent": -0.3,
+      "blackPercent": -0.35,
+      "muslimPercent": -0.3
+    },
+    "Liberal Democrat": {
+      "level4PlusPercent": 0.4,
+      "ownedMortgagePercent": 0.3,
+      "selfEmployedPercent": 0.15,
+      "employedPercent": 0.15,
+      "age": 0.1,
+      "privateRentedPercent": 0.1,
+      "noReligionPercent": 0.15,
+      "whitePercent": 0.1,
+      "imdDecile": -0.15,
+      "noQualificationsPercent": -0.35,
+      "socialRentedPercent": -0.2,
+      "retiredPercent": -0.1,
+      "unemployedPercent": -0.2
+    },
+    "Green": {
+      "level4PlusPercent": 0.45,
+      "studentPercent": 0.4,
+      "age": -0.4,
+      "privateRentedPercent": 0.25,
+      "noReligionPercent": 0.2,
+      "whitePercent": 0.15,
+      "employedPercent": 0.1,
+      "imdDecile": -0.1,
+      "retiredPercent": -0.35,
+      "noQualificationsPercent": -0.4,
+      "ownedOutrightPercent": -0.2,
+      "christianPercent": -0.15
+    },
+    "Independent/Other": {
+      "age": 0.05,
+      "retiredPercent": 0.05,
+      "ownedOutrightPercent": 0.05,
+      "imdDecile": 0.05
+    }
+  },
+  "notes": {
+    "Labour": "Strong with younger, diverse, working-class, urban renters, and deprived areas",
+    "Conservative": "Strong with older, retired, homeowners, affluent areas, traditional/rural voters",
+    "Reform": "Strong with older, white, less educated, working-class in deprived areas, anti-immigration sentiment",
+    "Liberal Democrat": "Strong with educated professionals, mortgage holders, middle-class suburban areas",
+    "Green": "Strong with highly educated, young, students, urban renters, secular voters",
+    "Independent/Other": "Minimal demographic patterns - largely local/personal factors"
+  }
+}

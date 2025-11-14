@@ -50,7 +50,10 @@ export const LAYER_METADATA = {
   qualificationsNone: { label: 'Qualifications: % No Qualifications', type: 'percentage', field: 'noQualificationsPercent' },
   qualificationsLevel1to3: { label: 'Qualifications: % Level 1-3', type: 'percentage', field: 'level1to3Percent' },
   qualificationsLevel4Plus: { label: 'Qualifications: % Level 4+', type: 'percentage', field: 'level4PlusPercent' },
-  qualificationsApprenticeship: { label: 'Qualifications: % Apprenticeship', type: 'percentage', field: 'apprenticeshipPercent' }
+  qualificationsApprenticeship: { label: 'Qualifications: % Apprenticeship', type: 'percentage', field: 'apprenticeshipPercent' },
+
+  // Political Predictions
+  prediction2025: { label: '2025 Election Prediction', type: 'prediction', field: 'predicted2025' }
 };
 
 // Helper to get value from ward demographics
@@ -94,6 +97,12 @@ export const formatPopupValue = (layer, wardDemographics) => {
     case 'percentage':
     case 'ethnicity':
       return `${value}%`;
+    case 'prediction':
+      if (value && value.winner) {
+        const winnerName = getPartyDisplayName(value.winner);
+        return `Predicted: ${winnerName}`;
+      }
+      return 'No prediction available';
     default:
       return value;
   }
@@ -103,4 +112,30 @@ export const formatPopupValue = (layer, wardDemographics) => {
 export const shouldShowDeprivationNote = (layer) => {
   const metadata = LAYER_METADATA[layer];
   return metadata && metadata.type === 'decile';
+};
+
+// Helper to get party display name
+export const getPartyDisplayName = (partyKey) => {
+  const names = {
+    labour: 'Labour',
+    conservative: 'Conservative',
+    libdem: 'Liberal Democrat',
+    green: 'Green',
+    reform: 'Reform',
+    independent: 'Independent/Other'
+  };
+  return names[partyKey] || partyKey;
+};
+
+// Helper to get party color
+export const getPartyColor = (partyKey) => {
+  const colors = {
+    labour: '#E4003B',      // Labour red
+    conservative: '#0087DC', // Conservative blue
+    libdem: '#FAA61A',      // Lib Dem yellow/orange
+    green: '#6AB023',       // Green
+    reform: '#12B6CF',      // Reform turquoise
+    independent: '#999999'  // Grey
+  };
+  return colors[partyKey] || '#CCCCCC';
 };

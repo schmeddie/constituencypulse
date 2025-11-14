@@ -212,6 +212,40 @@ async function main() {
     // Run the processor
     await runProcessor(args);
 
+    // Generate england-wards.json for correlation analysis
+    console.log('\n🗺️  Generating england-wards.json...');
+    const englandWardsScript = path.join(__dirname, 'generate-england-wards.js');
+    if (fs.existsSync(englandWardsScript)) {
+      await new Promise((resolve, reject) => {
+        const child = spawn('node', [englandWardsScript], {
+          cwd: __dirname,
+          stdio: 'inherit'
+        });
+        child.on('close', (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`England wards generation failed with code ${code}`));
+        });
+        child.on('error', reject);
+      });
+    }
+
+    // Calculate 2025 ward predictions
+    console.log('\n🔮 Calculating 2025 ward predictions...');
+    const predictionsScript = path.join(__dirname, 'calculate-ward-predictions.js');
+    if (fs.existsSync(predictionsScript)) {
+      await new Promise((resolve, reject) => {
+        const child = spawn('node', [predictionsScript], {
+          cwd: __dirname,
+          stdio: 'inherit'
+        });
+        child.on('close', (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`Predictions calculation failed with code ${code}`));
+        });
+        child.on('error', reject);
+      });
+    }
+
     // Success message
     console.log('\n═══════════════════════════════════════════════════════');
     console.log('  ✅ Data processing complete!');
