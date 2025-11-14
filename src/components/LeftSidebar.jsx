@@ -437,6 +437,20 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
           </div>
         </div>
 
+        {/* Political Predictions Section */}
+        <div className="mb-8">
+          <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
+            Political Predictions
+          </h3>
+          <div className="space-y-2">
+            <LayerToggle
+              label="2025 Election Prediction"
+              checked={activeLayers.prediction2025}
+              onChange={() => onToggleLayer('prediction2025')}
+            />
+          </div>
+        </div>
+
         {/* Events & Activities Section */}
         <div className="mb-8">
           <h3 className="text-xs font-semibold text-medium-grey uppercase tracking-wide mb-3">
