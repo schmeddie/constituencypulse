@@ -191,17 +191,48 @@ wardResults2024.forEach(row => {
   }
 });
 
+/**
+ * Normalize constituency name by moving cardinal directions
+ * "Sussex Mid" -> "Mid Sussex"
+ * "Surrey East" -> "East Surrey"
+ */
+function normalizeConstituencyName(name) {
+  if (!name) return name;
+
+  const cardinals = ['North', 'South', 'East', 'West', 'Mid', 'Central'];
+  const words = name.trim().split(/\s+/);
+
+  // Check if last word is a cardinal direction
+  const lastWord = words[words.length - 1];
+  if (cardinals.includes(lastWord) && words.length > 1) {
+    // Move it to the front: "Sussex Mid" -> "Mid Sussex"
+    const baseWords = words.slice(0, -1);
+    return `${lastWord} ${baseWords.join(' ')}`;
+  }
+
+  return name;
+}
+
 const constituencyPolling2025Map = {};
 constituencyPolling2025.forEach(row => {
   const name = row['Seat Name']?.trim();
   if (name) {
-    constituencyPolling2025Map[name] = {
+    const pollingData = {
       labour: parseFloat(row['LAB']?.replace('%', '')) || 0,
       conservative: parseFloat(row['CON']?.replace('%', '')) || 0,
       libdem: parseFloat(row['LIB']?.replace('%', '')) || 0,
       green: parseFloat(row['Green']?.replace('%', '')) || 0,
       reform: parseFloat(row['Reform']?.replace('%', '')) || 0
     };
+
+    // Index by original name
+    constituencyPolling2025Map[name] = pollingData;
+
+    // Also index by normalized name (e.g., "Sussex Mid" -> "Mid Sussex")
+    const normalized = normalizeConstituencyName(name);
+    if (normalized !== name) {
+      constituencyPolling2025Map[normalized] = pollingData;
+    }
   }
 });
 
