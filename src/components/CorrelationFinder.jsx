@@ -6,6 +6,7 @@ const CorrelationFinder = ({ isOpen, onClose, onAnalyze }) => {
   const [correlationType, setCorrelationType] = useState('positive');
 
   const metrics = [
+    // Deprivation Indices
     { value: 'imd', label: 'Overall Deprivation (IMD)' },
     { value: 'income', label: 'Income Deprivation' },
     { value: 'education', label: 'Education Deprivation' },
@@ -14,12 +15,48 @@ const CorrelationFinder = ({ isOpen, onClose, onAnalyze }) => {
     { value: 'crime', label: 'Crime Levels' },
     { value: 'housing', label: 'Housing Barriers' },
     { value: 'environment', label: 'Living Environment' },
+
+    // Demographics
     { value: 'age', label: 'Average Age' },
     { value: 'populationDensity', label: 'Population Density' },
+
+    // Ethnicity
     { value: 'ethnicityAsian', label: '% Asian Population' },
     { value: 'ethnicityBlack', label: '% Black Population' },
     { value: 'ethnicityMixed', label: '% Mixed Population' },
     { value: 'ethnicityWhite', label: '% White Population' },
+
+    // Economic Activity
+    { value: 'economicEmployed', label: '% Employed' },
+    { value: 'economicSelfEmployed', label: '% Self-Employed' },
+    { value: 'economicUnemployed', label: '% Unemployed' },
+    { value: 'economicRetired', label: '% Retired' },
+    { value: 'economicStudent', label: '% Students' },
+
+    // Country of Birth
+    { value: 'ukBorn', label: '% UK Born' },
+    { value: 'euBorn', label: '% EU Born' },
+    { value: 'nonEuBorn', label: '% Non-EU Born' },
+
+    // Religion
+    { value: 'religionChristian', label: '% Christian' },
+    { value: 'religionMuslim', label: '% Muslim' },
+    { value: 'religionHindu', label: '% Hindu' },
+    { value: 'religionSikh', label: '% Sikh' },
+    { value: 'religionJewish', label: '% Jewish' },
+    { value: 'religionNone', label: '% No Religion' },
+
+    // Housing Tenure
+    { value: 'housingOwnedOutright', label: '% Owned Outright' },
+    { value: 'housingOwnedMortgage', label: '% Owned with Mortgage' },
+    { value: 'housingSocialRented', label: '% Social Rented' },
+    { value: 'housingPrivateRented', label: '% Private Rented' },
+
+    // Qualifications
+    { value: 'qualificationsNone', label: '% No Qualifications' },
+    { value: 'qualificationsLevel1to3', label: '% Level 1-3 Qualifications' },
+    { value: 'qualificationsLevel4Plus', label: '% Level 4+ (Degree)' },
+    { value: 'qualificationsApprenticeship', label: '% Apprenticeship' },
   ];
 
   const handleAnalyze = () => {
