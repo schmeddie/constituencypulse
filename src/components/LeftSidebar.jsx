@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation, onShowRankings, onShowFilter, activeFiltersCount, onShowComparison }) => {
+const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryChange, onFindCorrelation, onShowRankings, onShowFilter, activeFiltersCount, onShowComparison, onShowNationalPredictor }) => {
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0 });
   const ethnicityTriggerRef = useRef(null);
@@ -89,6 +89,12 @@ const LeftSidebar = ({ activeLayers, activeCategory, onToggleLayer, onCategoryCh
             className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium shadow-sm"
           >
             Compare Constituencies
+          </button>
+          <button
+            onClick={onShowNationalPredictor}
+            className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-blue-600 text-white rounded-lg hover:from-red-700 hover:to-blue-700 transition-colors font-medium shadow-sm"
+          >
+            🗳️ Predict Election
           </button>
         </div>
 

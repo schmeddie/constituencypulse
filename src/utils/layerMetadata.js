@@ -98,11 +98,22 @@ export const formatPopupValue = (layer, wardDemographics) => {
     case 'ethnicity':
       return `${value}%`;
     case 'prediction':
+      // Handle various states of prediction data
+      if (!value) {
+        console.warn('No prediction data for ward');
+        return 'No prediction available';
+      }
+      if (typeof value === 'string') {
+        console.warn('Prediction data is a string, expected object:', value);
+        return 'Data error - please regenerate';
+      }
       if (value && value.winner) {
         const winnerName = getPartyDisplayName(value.winner);
-        return `Predicted: ${winnerName}`;
+        const confidence = value.confidence || 0;
+        return `Predicted: ${winnerName} (${confidence}% confidence)`;
       }
-      return 'No prediction available';
+      console.warn('Prediction data missing winner:', value);
+      return 'Prediction incomplete';
     default:
       return value;
   }
