@@ -1387,6 +1387,33 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                   <span>75-100%</span>
                 </div>
               </>
+            ) : LAYER_METADATA[activeDemographic]?.type === 'prediction' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#E4003B', border: '1px solid #ccc' }}></div>
+                  <span>Labour</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#0087DC', border: '1px solid #ccc' }}></div>
+                  <span>Conservative</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#FAA61A', border: '1px solid #ccc' }}></div>
+                  <span>Liberal Democrat</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#6AB023', border: '1px solid #ccc' }}></div>
+                  <span>Green</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#12B6CF', border: '1px solid #ccc' }}></div>
+                  <span>Reform</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: 'rgba(200, 200, 200, 0.3)', border: '1px solid #ccc' }}></div>
+                  <span>No prediction</span>
+                </div>
+              </>
             ) : (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
