@@ -16,6 +16,110 @@ import { parse } from 'csv-parse/sync';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Calculate demographic similarity score between two wards
+ * Returns 0-100, where 100 = identical demographics
+ */
+function calculateDemographicSimilarity(ward1Demographics, ward2Demographics) {
+  const demographicFields = [
+    { field: 'averageAge', weight: 2.0, scale: 100 },
+    { field: 'imdDecile', weight: 1.5, scale: 10 },
+    { field: 'whitePercent', weight: 1.8, scale: 100 },
+    { field: 'asianPercent', weight: 1.2, scale: 100 },
+    { field: 'blackPercent', weight: 1.2, scale: 100 },
+    { field: 'level4PlusPercent', weight: 2.0, scale: 100 },
+    { field: 'noQualificationsPercent', weight: 1.8, scale: 100 },
+    { field: 'ownedOutrightPercent', weight: 1.5, scale: 100 },
+    { field: 'socialRentedPercent', weight: 1.5, scale: 100 },
+    { field: 'employedPercent', weight: 1.0, scale: 100 },
+    { field: 'unemployedPercent', weight: 1.2, scale: 100 },
+    { field: 'retiredPercent', weight: 1.0, scale: 100 }
+  ];
+
+  let totalWeightedDifference = 0;
+  let totalWeight = 0;
+
+  for (const { field, weight, scale } of demographicFields) {
+    const val1 = ward1Demographics[field];
+    const val2 = ward2Demographics[field];
+
+    if (val1 !== null && val1 !== undefined &&
+        val2 !== null && val2 !== undefined) {
+      // Normalize difference to 0-1 range
+      const normalizedDiff = Math.abs(val1 - val2) / scale;
+      totalWeightedDifference += normalizedDiff * weight;
+      totalWeight += weight;
+    }
+  }
+
+  if (totalWeight === 0) return 0;
+
+  // Convert to similarity score (0-100)
+  const avgDifference = totalWeightedDifference / totalWeight;
+  const similarity = Math.max(0, (1 - avgDifference) * 100);
+
+  return similarity;
+}
+
+/**
+ * Find the N most similar wards that have 2024 election data
+ */
+function findSimilarWardsWithData(targetWard, allWardsWithData, n = 5) {
+  const similarities = allWardsWithData.map(wardWithData => ({
+    ward: wardWithData,
+    similarity: calculateDemographicSimilarity(
+      targetWard.demographics,
+      wardWithData.demographics
+    )
+  }));
+
+  // Sort by similarity (descending)
+  similarities.sort((a, b) => b.similarity - a.similarity);
+
+  // Return top N
+  return similarities.slice(0, n);
+}
+
+/**
+ * Calculate average 2024 results from similar wards
+ */
+function averageResultsFromSimilarWards(similarWards, wardResults2024Map) {
+  const weightedTotals = {
+    labour: 0,
+    conservative: 0,
+    libdem: 0,
+    green: 0,
+    reform: 0,
+    independent: 0
+  };
+
+  let totalWeight = 0;
+
+  for (const { ward, similarity } of similarWards) {
+    const result2024 = wardResults2024Map[ward.id];
+    if (result2024) {
+      // Weight by similarity (higher similarity = more influence)
+      const weight = similarity / 100;
+
+      Object.keys(weightedTotals).forEach(party => {
+        weightedTotals[party] += (result2024[party] || 0) * weight;
+      });
+
+      totalWeight += weight;
+    }
+  }
+
+  if (totalWeight === 0) return null;
+
+  // Calculate weighted average
+  const averageResults = {};
+  Object.keys(weightedTotals).forEach(party => {
+    averageResults[party] = weightedTotals[party] / totalWeight;
+  });
+
+  return averageResults;
+}
+
 console.log('\n=== Calculating 2025 Ward Predictions ===\n');
 
 // Load demographic weights
@@ -202,7 +306,7 @@ function calculate2024ConstituencyAggregate(wards, wardResults2024Map) {
 /**
  * Process predictions for a constituency
  */
-function processPredictions(constituencyData, wardResults2024Map, constituencyPolling2025Map) {
+function processPredictions(constituencyData, wardResults2024Map, constituencyPolling2025Map, allWardsWithData) {
   const constituencyName = constituencyData.constituency.name;
 
   // Find polling data
@@ -242,18 +346,71 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
 
   // Process each ward
   let wardsProcessed = 0;
+  let wardsWithActualData = 0;
+  let wardsWithSimilarData = 0;
+  let wardsWithConstituencyAvg = 0;
+
   constituencyData.wards.forEach(ward => {
     const wardResult2024 = wardResults2024Map[ward.id];
+    let baseline2024;
+    let dataSource;
+    let similarWardsInfo = null;
+    let baseConfidence;
 
-    // Use constituency average if ward not found
-    const baseline2024 = wardResult2024 || {
-      labour: aggregate2024.labour,
-      conservative: aggregate2024.conservative,
-      libdem: aggregate2024.libdem,
-      green: aggregate2024.green,
-      reform: aggregate2024.reform,
-      independent: aggregate2024.independent || 0
-    };
+    if (wardResult2024) {
+      // Ward has actual 2024 data - HIGH confidence
+      baseline2024 = wardResult2024;
+      dataSource = 'actual';
+      baseConfidence = 90;
+      wardsWithActualData++;
+    } else {
+      // Ward missing 2024 data - try to find similar wards
+      const similarWards = findSimilarWardsWithData(ward, allWardsWithData, 5);
+
+      if (similarWards && similarWards.length > 0 && similarWards[0].similarity > 30) {
+        // Use similar wards' average - MEDIUM confidence
+        baseline2024 = averageResultsFromSimilarWards(similarWards, wardResults2024Map);
+
+        if (baseline2024) {
+          dataSource = 'similar';
+          baseConfidence = Math.min(70, 40 + (similarWards[0].similarity / 3)); // 30-70% based on similarity
+          wardsWithSimilarData++;
+
+          // Store similarity info for transparency
+          similarWardsInfo = similarWards.slice(0, 3).map(sw => ({
+            name: sw.ward.name,
+            constituency: sw.ward.constituency,
+            similarity: Math.round(sw.similarity)
+          }));
+        } else {
+          // Fallback to constituency average
+          baseline2024 = {
+            labour: aggregate2024.labour,
+            conservative: aggregate2024.conservative,
+            libdem: aggregate2024.libdem,
+            green: aggregate2024.green,
+            reform: aggregate2024.reform,
+            independent: aggregate2024.independent || 0
+          };
+          dataSource = 'constituency_avg';
+          baseConfidence = 30;
+          wardsWithConstituencyAvg++;
+        }
+      } else {
+        // No similar wards found - use constituency average - LOW confidence
+        baseline2024 = {
+          labour: aggregate2024.labour,
+          conservative: aggregate2024.conservative,
+          libdem: aggregate2024.libdem,
+          green: aggregate2024.green,
+          reform: aggregate2024.reform,
+          independent: aggregate2024.independent || 0
+        };
+        dataSource = 'constituency_avg';
+        baseConfidence = 30;
+        wardsWithConstituencyAvg++;
+      }
+    }
 
     // Calculate susceptibility scores
     const susceptibility = {};
@@ -298,13 +455,16 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
       }
     });
 
-    // Calculate confidence (how distinct is the winner?)
+    // Calculate confidence based on winner margin AND data quality
     const sortedVotes = Object.values(predicted2025).sort((a, b) => b - a);
     const margin = sortedVotes[0] - sortedVotes[1];
-    const confidence = Math.min(100, Math.round((margin / 20) * 100)); // 20pp margin = 100% confidence
+    const marginConfidence = Math.min(100, Math.round((margin / 20) * 100)); // 20pp margin = 100%
+
+    // Combine base confidence (data quality) with margin confidence
+    const confidence = Math.round((baseConfidence * 0.6) + (marginConfidence * 0.4));
 
     // Store prediction in ward demographics
-    ward.demographics.predicted2025 = {
+    const prediction = {
       labour: parseFloat(predicted2025.labour.toFixed(1)),
       conservative: parseFloat(predicted2025.conservative.toFixed(1)),
       libdem: parseFloat(predicted2025.libdem.toFixed(1)),
@@ -313,13 +473,24 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
       independent: parseFloat(predicted2025.independent.toFixed(1)),
       winner: winner,
       confidence: confidence,
+      dataSource: dataSource,
       keyFactors: getKeyFactors(ward.demographics, constituencyAvgDemographics, susceptibility)
     };
+
+    // Add similar wards info if applicable
+    if (similarWardsInfo) {
+      prediction.similarWards = similarWardsInfo;
+    }
+
+    ward.demographics.predicted2025 = prediction;
 
     wardsProcessed++;
   });
 
-  console.log(`    ✓ Processed ${wardsProcessed} wards\n`);
+  console.log(`    ✓ Processed ${wardsProcessed} wards:`);
+  console.log(`      ${wardsWithActualData} with actual 2024 data (high confidence)`);
+  console.log(`      ${wardsWithSimilarData} with similar ward data (medium confidence)`);
+  console.log(`      ${wardsWithConstituencyAvg} with constituency average (low confidence)\n`);
   return true;
 }
 
@@ -367,11 +538,35 @@ function getKeyFactors(wardDemographics, constituencyAvgDemographics, susceptibi
   return factors.slice(0, 3); // Top 3 factors
 }
 
-// Process all constituencies
+// Build index of all wards WITH 2024 election data across all constituencies
+console.log('🔍 Building similarity index...\n');
 const constituenciesDir = path.join(__dirname, '../src/data');
 const files = fs.readdirSync(constituenciesDir)
   .filter(f => f.endsWith('.json') && f !== 'constituencies.json' && f !== 'events.json');
 
+const allWardsWithData = [];
+files.forEach(file => {
+  const filePath = path.join(constituenciesDir, file);
+  const constituencyData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  if (constituencyData.wards) {
+    constituencyData.wards.forEach(ward => {
+      if (wardResults2024Map[ward.id]) {
+        allWardsWithData.push({
+          id: ward.id,
+          name: ward.name,
+          constituency: constituencyData.constituency.name,
+          demographics: ward.demographics
+        });
+      }
+    });
+  }
+});
+
+console.log(`✓ Found ${allWardsWithData.length} wards with 2024 election data\n`);
+console.log('🔮 Calculating predictions...\n');
+
+// Process all constituencies
 let processedCount = 0;
 let skippedCount = 0;
 
@@ -382,7 +577,8 @@ files.forEach(file => {
   const success = processPredictions(
     constituencyData,
     wardResults2024Map,
-    constituencyPolling2025Map
+    constituencyPolling2025Map,
+    allWardsWithData
   );
 
   if (success) {
