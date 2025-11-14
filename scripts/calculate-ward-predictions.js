@@ -553,9 +553,9 @@ function getKeyFactors(wardDemographics, constituencyAvgDemographics, susceptibi
 
 // Build index of all wards WITH 2024 election data across all constituencies
 console.log('🔍 Building similarity index...\n');
-const constituenciesDir = path.join(__dirname, '../src/data');
+const constituenciesDir = path.join(__dirname, '../src/data/constituencies');
 const files = fs.readdirSync(constituenciesDir)
-  .filter(f => f.endsWith('.json') && f !== 'constituencies.json' && f !== 'events.json');
+  .filter(f => f.endsWith('.json'));
 
 const allWardsWithData = [];
 files.forEach(file => {

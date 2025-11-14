@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const constituenciesDir = path.join(__dirname, '../src/data');
+const constituenciesDir = path.join(__dirname, '../src/data/constituencies');
 const publicDataDir = path.join(__dirname, '../public/data');
 
 console.log('=== Generating england-wards.json from constituency files ===\n');
@@ -23,7 +23,7 @@ if (!fs.existsSync(publicDataDir)) {
 
 // Read all constituency JSON files
 const files = fs.readdirSync(constituenciesDir)
-  .filter(f => f.endsWith('.json') && f !== 'constituencies.json' && f !== 'events.json');
+  .filter(f => f.endsWith('.json'));
 
 console.log(`Found ${files.length} constituency files\n`);
 
