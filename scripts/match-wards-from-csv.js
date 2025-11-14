@@ -613,7 +613,7 @@ function loadLSOAEthnicityData() {
     bom: true
   });
 
-  console.log(`Loaded ${ethRecords.length} LSOA ethnicity records`);
+  console.log(`Loaded ${ethRecords.length} rows (20 categories per LSOA)`);
 
   // Build LSOA ethnicity map: lsoaCode -> { asian, black, mixed, white, other, total }
   const lsoaEthnicity = {};
@@ -669,7 +669,7 @@ function loadLSOAEthnicityData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaEthnicity).length} LSOA ethnicity records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaEthnicity).length} unique LSOAs\n`);
 
   return lsoaEthnicity;
 }
@@ -699,7 +699,7 @@ function loadLSOAEconomicActivityData() {
     bom: true
   });
 
-  console.log(`Loaded ${records.length} LSOA economic activity records`);
+  console.log(`Loaded ${records.length} rows (20 categories per LSOA)`);
 
   const lsoaEconomicActivity = {};
 
@@ -764,7 +764,7 @@ function loadLSOAEconomicActivityData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaEconomicActivity).length} LSOA economic activity records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaEconomicActivity).length} unique LSOAs\n`);
 
   return lsoaEconomicActivity;
 }
@@ -794,7 +794,7 @@ function loadLSOACountryOfBirthData() {
     bom: true
   });
 
-  console.log(`Loaded ${records.length} LSOA country of birth records`);
+  console.log(`Loaded ${records.length} rows (12 categories per LSOA)`);
 
   const lsoaCountryOfBirth = {};
 
@@ -839,7 +839,7 @@ function loadLSOACountryOfBirthData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaCountryOfBirth).length} LSOA country of birth records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaCountryOfBirth).length} unique LSOAs\n`);
 
   return lsoaCountryOfBirth;
 }
@@ -869,7 +869,7 @@ function loadLSOAReligionData() {
     bom: true
   });
 
-  console.log(`Loaded ${records.length} LSOA religion records`);
+  console.log(`Loaded ${records.length} rows (10 categories per LSOA)`);
 
   const lsoaReligion = {};
 
@@ -927,7 +927,7 @@ function loadLSOAReligionData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaReligion).length} LSOA religion records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaReligion).length} unique LSOAs\n`);
 
   return lsoaReligion;
 }
@@ -957,7 +957,7 @@ function loadLSOAHousingData() {
     bom: true
   });
 
-  console.log(`Loaded ${records.length} LSOA housing tenure records`);
+  console.log(`Loaded ${records.length} rows (9 categories per LSOA)`);
 
   const lsoaHousing = {};
 
@@ -1005,7 +1005,7 @@ function loadLSOAHousingData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaHousing).length} LSOA housing tenure records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaHousing).length} unique LSOAs\n`);
 
   return lsoaHousing;
 }
@@ -1035,7 +1035,7 @@ function loadLSOAQualificationsData() {
     bom: true
   });
 
-  console.log(`Loaded ${records.length} LSOA qualifications records`);
+  console.log(`Loaded ${records.length} rows (8 categories per LSOA)`);
 
   const lsoaQualifications = {};
 
@@ -1090,7 +1090,7 @@ function loadLSOAQualificationsData() {
     }
   }
 
-  console.log(`Processed ${Object.keys(lsoaQualifications).length} LSOA qualifications records\n`);
+  console.log(`Grouped into ${Object.keys(lsoaQualifications).length} unique LSOAs\n`);
 
   return lsoaQualifications;
 }
