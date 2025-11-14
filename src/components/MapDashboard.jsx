@@ -1102,6 +1102,20 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                             ))}
                           </div>
                         )}
+                        {selectedWard.predicted2025.similarWards && selectedWard.predicted2025.similarWards.length > 0 && (
+                          <div style={{
+                            marginTop: '8px',
+                            paddingTop: '8px',
+                            borderTop: '1px solid #e5e7eb',
+                            fontSize: '11px',
+                            color: '#6b7280'
+                          }}>
+                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>Based on similar wards:</div>
+                            {selectedWard.predicted2025.similarWards.map((sw, i) => (
+                              <div key={i}>• {sw.name} ({sw.constituency}) - {sw.similarity}% similar</div>
+                            ))}
+                          </div>
+                        )}
                         <div style={{
                           marginTop: '6px',
                           fontSize: '10px',
@@ -1109,6 +1123,9 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                           fontStyle: 'italic'
                         }}>
                           Confidence: {selectedWard.predicted2025.confidence}%
+                          {selectedWard.predicted2025.dataSource === 'actual' && ' (Actual 2024 data)'}
+                          {selectedWard.predicted2025.dataSource === 'similar' && ' (Similar wards)'}
+                          {selectedWard.predicted2025.dataSource === 'constituency_avg' && ' (Constituency average)'}
                         </div>
                       </div>
                     )}
