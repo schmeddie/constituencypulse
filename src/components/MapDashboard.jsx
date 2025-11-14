@@ -413,6 +413,33 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             mixedPercent: ward.demographics.mixedPercent,
             whitePercent: ward.demographics.whitePercent,
             otherPercent: ward.demographics.otherPercent,
+            // Census 2021 - Economic Activity
+            employedPercent: ward.demographics.employedPercent,
+            selfEmployedPercent: ward.demographics.selfEmployedPercent,
+            unemployedPercent: ward.demographics.unemployedPercent,
+            studentPercent: ward.demographics.studentPercent,
+            retiredPercent: ward.demographics.retiredPercent,
+            // Census 2021 - Country of Birth
+            ukBornPercent: ward.demographics.ukBornPercent,
+            euBornPercent: ward.demographics.euBornPercent,
+            nonEuBornPercent: ward.demographics.nonEuBornPercent,
+            // Census 2021 - Religion
+            christianPercent: ward.demographics.christianPercent,
+            muslimPercent: ward.demographics.muslimPercent,
+            hinduPercent: ward.demographics.hinduPercent,
+            sikhPercent: ward.demographics.sikhPercent,
+            jewishPercent: ward.demographics.jewishPercent,
+            noReligionPercent: ward.demographics.noReligionPercent,
+            // Census 2021 - Housing Tenure
+            ownedOutrightPercent: ward.demographics.ownedOutrightPercent,
+            ownedMortgagePercent: ward.demographics.ownedMortgagePercent,
+            socialRentedPercent: ward.demographics.socialRentedPercent,
+            privateRentedPercent: ward.demographics.privateRentedPercent,
+            // Census 2021 - Qualifications
+            noQualificationsPercent: ward.demographics.noQualificationsPercent,
+            level1to3Percent: ward.demographics.level1to3Percent,
+            level4PlusPercent: ward.demographics.level4PlusPercent,
+            apprenticeshipPercent: ward.demographics.apprenticeshipPercent,
             fillColor: fillColor
           },
           geometry: geometry
