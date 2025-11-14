@@ -1057,11 +1057,11 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                     )}
 
                     {/* Show detailed prediction breakdown */}
-                    {activeDemographic === 'prediction2025' && selectedWard.predicted2025 && (
+                    {activeDemographic === 'prediction2025' && selectedWard.predicted2025 && typeof selectedWard.predicted2025 === 'object' && (
                       <div style={{ marginTop: '8px', fontSize: '12px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           {Object.entries(selectedWard.predicted2025)
-                            .filter(([key]) => !['winner', 'confidence', 'keyFactors'].includes(key))
+                            .filter(([key]) => !['winner', 'confidence', 'keyFactors', 'dataSource', 'similarWards'].includes(key))
                             .sort(([, a], [, b]) => b - a)
                             .map(([party, vote]) => (
                               <div key={party} style={{
