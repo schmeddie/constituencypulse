@@ -31,6 +31,15 @@ If you don't provide these, the corresponding fields will be `null`:
 - `lsoa-housing.csv` - Housing tenure (9 categories)
 - `lsoa-qualifications.csv` - Highest qualification level (8 categories)
 
+### Optional Prediction Data
+For 2025 ward election predictions (if not provided, predictions will be skipped):
+
+- `ward-election-results-2024.csv` - 2024 local election results by ward
+  - Columns: Ward code, Ward name, LAB, CON, LD, GREEN, REF, IND (percentage values)
+- `constituency-polling-2025.csv` - October 2025 constituency polling data
+  - Columns: Seat Name, Electorate, CON, LAB, LIB, Green, Reform (percentage values)
+  - Note: File may have a title row - will be automatically skipped
+
 ## Usage
 
 1. **Download CSV files** from ONS/Nomis
