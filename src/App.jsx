@@ -10,6 +10,7 @@ import WardRankings from './components/WardRankings';
 import AdvancedFilter from './components/AdvancedFilter';
 import ConstituencyComparison from './components/ConstituencyComparison';
 import ComparisonView from './components/ComparisonView';
+import NationalPredictor from './components/NationalPredictor';
 import { analyzeCorrelation } from './utils/correlationAnalysis';
 
 // Import demographic data (same across all constituencies)
@@ -104,6 +105,7 @@ function App() {
   // Constituency comparison state
   const [isComparisonSelectorOpen, setIsComparisonSelectorOpen] = useState(false);
   const [comparisonConstituencies, setComparisonConstituencies] = useState(null);
+  const [showNationalPredictor, setShowNationalPredictor] = useState(false);
 
   // Load constituency data when selected
   const handleSelectConstituency = async (constituencyInfo) => {
@@ -311,6 +313,24 @@ function App() {
     setIsComparisonSelectorOpen(true);
   };
 
+  // Handler for showing national predictor
+  const handleShowNationalPredictor = () => {
+    setShowNationalPredictor(true);
+  };
+
+  const handleCloseNationalPredictor = () => {
+    setShowNationalPredictor(false);
+  };
+
+  const handleShowAllWardsMap = () => {
+    // Enable the prediction layer and zoom to full England view
+    setActiveLayers(prev => ({ ...prev, prediction2025: true }));
+    setShowNationalPredictor(false);
+    // Reset to no constituency selected
+    setSelectedConstituency(null);
+    setConstituencyData(null);
+  };
+
   // Handler for starting comparison
   const handleStartComparison = (constituencies) => {
     setComparisonConstituencies(constituencies);
@@ -357,6 +377,7 @@ function App() {
           onShowFilter={handleShowFilter}
           activeFiltersCount={activeFilters.length}
           onShowComparison={handleShowComparison}
+          onShowNationalPredictor={handleShowNationalPredictor}
         />
 
         <main className="flex-1 relative">
@@ -399,6 +420,14 @@ function App() {
         onClose={() => setIsFilterOpen(false)}
         onApplyFilter={handleApplyFilter}
       />
+
+      {/* National Election Predictor */}
+      {showNationalPredictor && (
+        <NationalPredictor
+          onClose={handleCloseNationalPredictor}
+          onShowAllWards={handleShowAllWardsMap}
+        />
+      )}
 
       {/* Constituency Comparison Selector */}
       <ConstituencyComparison
