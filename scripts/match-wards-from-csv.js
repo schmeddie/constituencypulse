@@ -40,40 +40,21 @@ const TEST_CONSTITUENCY_NAMES = [
   'Norwich South'
 ];
 
-// Generate demographics from LSOA data or fall back to mock data
+// Generate demographics from LSOA data - NO MOCK DATA
+// This function aggregates LSOA-level data up to ward level by summing all LSOAs in each ward
 function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnicityData, lsoaEconomicActivityData, lsoaCountryOfBirthData, lsoaReligionData, lsoaHousingData, lsoaQualificationsData) {
-  // If no LSOA data provided, return mock data
+  // LSOA data is required - fail if not provided
   if (!lsoaData || !lsoaData.wardToLSOAs || !lsoaData.lsoaRankings) {
-    return {
-      population: 5000 + Math.floor(Math.random() * 10000),
-      averageAge: null,
-      population0to15: null,
-      imdRank: null,
-      imdDecile: null,
-      incomeRank: null,
-      incomeDecile: null,
-      employmentRank: null,
-      employmentDecile: null,
-      educationRank: null,
-      educationDecile: null,
-      healthRank: null,
-      healthDecile: null,
-      crimeRank: null,
-      crimeDecile: null,
-      housingRank: null,
-      housingDecile: null,
-      environmentRank: null,
-      environmentDecile: null
-    };
+    throw new Error('LSOA data is required. Please provide lsoa-deprivation.csv and lsoa-ward-mapping.csv');
   }
 
   // Get all LSOAs for this ward
   const lsoasInWard = lsoaData.wardToLSOAs[wardCode] || [];
 
   if (lsoasInWard.length === 0) {
-    // No LSOAs found for this ward, return null values
+    // No LSOAs mapped to this ward - return null values (ward exists but no LSOA mapping)
     return {
-      population: 8000, // Estimate
+      population: null,
       averageAge: null,
       population0to15: null,
       imdRank: null,
@@ -91,7 +72,38 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
       housingRank: null,
       housingDecile: null,
       environmentRank: null,
-      environmentDecile: null
+      environmentDecile: null,
+      asianPercent: null,
+      blackPercent: null,
+      mixedPercent: null,
+      whitePercent: null,
+      otherPercent: null,
+      employedPercent: null,
+      selfEmployedPercent: null,
+      unemployedPercent: null,
+      studentPercent: null,
+      retiredPercent: null,
+      inactivePercent: null,
+      ukBornPercent: null,
+      euBornPercent: null,
+      nonEuBornPercent: null,
+      noReligionPercent: null,
+      christianPercent: null,
+      muslimPercent: null,
+      hinduPercent: null,
+      sikhPercent: null,
+      jewishPercent: null,
+      buddhistPercent: null,
+      otherReligionPercent: null,
+      ownedOutrightPercent: null,
+      ownedMortgagePercent: null,
+      socialRentedPercent: null,
+      privateRentedPercent: null,
+      noQualificationsPercent: null,
+      level1to3Percent: null,
+      level4PlusPercent: null,
+      apprenticeshipPercent: null,
+      otherQualificationsPercent: null
     };
   }
 
@@ -402,21 +414,22 @@ function generateDemographics(wardCode, lsoaData, lsoaPopulationData, lsoaEthnic
   };
 }
 
-// Load and process LSOA data files
+// Load and process LSOA deprivation data files
 function loadLSOAData() {
   if (!LSOA_DATA_PATH || !LSOA_WARD_MAPPING_PATH) {
-    console.log('LSOA data files not provided - using mock demographics\n');
-    return null;
+    console.error('ERROR: LSOA deprivation and ward mapping files are required');
+    console.error('Please provide lsoa-deprivation.csv and lsoa-ward-mapping.csv\n');
+    process.exit(1);
   }
 
   if (!fs.existsSync(LSOA_DATA_PATH)) {
-    console.warn(`Warning: LSOA data file not found: ${LSOA_DATA_PATH}`);
-    return null;
+    console.error(`ERROR: LSOA data file not found: ${LSOA_DATA_PATH}`);
+    process.exit(1);
   }
 
   if (!fs.existsSync(LSOA_WARD_MAPPING_PATH)) {
-    console.warn(`Warning: LSOA-Ward mapping file not found: ${LSOA_WARD_MAPPING_PATH}`);
-    return null;
+    console.error(`ERROR: LSOA-Ward mapping file not found: ${LSOA_WARD_MAPPING_PATH}`);
+    process.exit(1);
   }
 
   console.log(`Loading LSOA data from: ${LSOA_DATA_PATH}...`);
@@ -500,13 +513,13 @@ function loadLSOAData() {
 
 // Load and process LSOA population/age data
 function loadLSOAPopulationData() {
-  if (!LSOA_POPULATION_PATH) {
-    console.log('LSOA population data file not provided - using estimated population\n');
+  if (!LSOA_POPULATION_PATH || LSOA_POPULATION_PATH === '') {
+    console.log('⚠️  LSOA population data not provided - population fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_POPULATION_PATH)) {
-    console.warn(`Warning: LSOA population file not found: ${LSOA_POPULATION_PATH}`);
+    console.warn(`⚠️  LSOA population file not found: ${LSOA_POPULATION_PATH} - skipping\n`);
     return null;
   }
 
@@ -576,13 +589,13 @@ function loadLSOAPopulationData() {
 
 // Load and process LSOA ethnicity data
 function loadLSOAEthnicityData() {
-  if (!LSOA_ETHNICITY_PATH) {
-    console.log('LSOA ethnicity data file not provided\n');
+  if (!LSOA_ETHNICITY_PATH || LSOA_ETHNICITY_PATH === '') {
+    console.log('⚠️  LSOA ethnicity data not provided - ethnicity fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_ETHNICITY_PATH)) {
-    console.warn(`Warning: LSOA ethnicity file not found: ${LSOA_ETHNICITY_PATH}`);
+    console.warn(`⚠️  LSOA ethnicity file not found: ${LSOA_ETHNICITY_PATH} - skipping\n`);
     return null;
   }
 
@@ -663,13 +676,13 @@ function loadLSOAEthnicityData() {
 
 // Load and process LSOA economic activity data
 function loadLSOAEconomicActivityData() {
-  if (!LSOA_ECONOMIC_ACTIVITY_PATH) {
-    console.log('LSOA economic activity data file not provided\n');
+  if (!LSOA_ECONOMIC_ACTIVITY_PATH || LSOA_ECONOMIC_ACTIVITY_PATH === '') {
+    console.log('⚠️  LSOA economic activity data not provided - economic activity fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_ECONOMIC_ACTIVITY_PATH)) {
-    console.warn(`Warning: LSOA economic activity file not found: ${LSOA_ECONOMIC_ACTIVITY_PATH}`);
+    console.warn(`⚠️  LSOA economic activity file not found: ${LSOA_ECONOMIC_ACTIVITY_PATH} - skipping\n`);
     return null;
   }
 
@@ -758,13 +771,13 @@ function loadLSOAEconomicActivityData() {
 
 // Load and process LSOA country of birth data
 function loadLSOACountryOfBirthData() {
-  if (!LSOA_COUNTRY_OF_BIRTH_PATH) {
-    console.log('LSOA country of birth data file not provided\n');
+  if (!LSOA_COUNTRY_OF_BIRTH_PATH || LSOA_COUNTRY_OF_BIRTH_PATH === '') {
+    console.log('⚠️  LSOA country of birth data not provided - country of birth fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_COUNTRY_OF_BIRTH_PATH)) {
-    console.warn(`Warning: LSOA country of birth file not found: ${LSOA_COUNTRY_OF_BIRTH_PATH}`);
+    console.warn(`⚠️  LSOA country of birth file not found: ${LSOA_COUNTRY_OF_BIRTH_PATH} - skipping\n`);
     return null;
   }
 
@@ -833,13 +846,13 @@ function loadLSOACountryOfBirthData() {
 
 // Load and process LSOA religion data
 function loadLSOAReligionData() {
-  if (!LSOA_RELIGION_PATH) {
-    console.log('LSOA religion data file not provided\n');
+  if (!LSOA_RELIGION_PATH || LSOA_RELIGION_PATH === '') {
+    console.log('⚠️  LSOA religion data not provided - religion fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_RELIGION_PATH)) {
-    console.warn(`Warning: LSOA religion file not found: ${LSOA_RELIGION_PATH}`);
+    console.warn(`⚠️  LSOA religion file not found: ${LSOA_RELIGION_PATH} - skipping\n`);
     return null;
   }
 
@@ -921,13 +934,13 @@ function loadLSOAReligionData() {
 
 // Load and process LSOA housing tenure data
 function loadLSOAHousingData() {
-  if (!LSOA_HOUSING_PATH) {
-    console.log('LSOA housing tenure data file not provided\n');
+  if (!LSOA_HOUSING_PATH || LSOA_HOUSING_PATH === '') {
+    console.log('⚠️  LSOA housing tenure data not provided - housing fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_HOUSING_PATH)) {
-    console.warn(`Warning: LSOA housing file not found: ${LSOA_HOUSING_PATH}`);
+    console.warn(`⚠️  LSOA housing file not found: ${LSOA_HOUSING_PATH} - skipping\n`);
     return null;
   }
 
@@ -999,13 +1012,13 @@ function loadLSOAHousingData() {
 
 // Load and process LSOA qualifications data
 function loadLSOAQualificationsData() {
-  if (!LSOA_QUALIFICATIONS_PATH) {
-    console.log('LSOA qualifications data file not provided\n');
+  if (!LSOA_QUALIFICATIONS_PATH || LSOA_QUALIFICATIONS_PATH === '') {
+    console.log('⚠️  LSOA qualifications data not provided - qualifications fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_QUALIFICATIONS_PATH)) {
-    console.warn(`Warning: LSOA qualifications file not found: ${LSOA_QUALIFICATIONS_PATH}`);
+    console.warn(`⚠️  LSOA qualifications file not found: ${LSOA_QUALIFICATIONS_PATH} - skipping\n`);
     return null;
   }
 
