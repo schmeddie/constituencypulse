@@ -38,7 +38,8 @@ const wardResults2024CSV = fs.readFileSync(wardResults2024Path, 'utf8');
 const wardResults2024 = parse(wardResults2024CSV, {
   columns: true,
   skip_empty_lines: true,
-  trim: true
+  trim: true,
+  bom: true
 });
 console.log(`✓ Loaded ${wardResults2024.length} ward results from 2024\n`);
 
@@ -53,7 +54,9 @@ const constituencyPolling2025CSV = fs.readFileSync(constituencyPolling2025Path, 
 const constituencyPolling2025 = parse(constituencyPolling2025CSV, {
   columns: true,
   skip_empty_lines: true,
-  trim: true
+  trim: true,
+  bom: true,
+  from_line: 2  // Skip the title row
 });
 console.log(`✓ Loaded polling for ${constituencyPolling2025.length} constituencies\n`);
 
