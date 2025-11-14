@@ -145,8 +145,9 @@ function buildArguments(detected) {
     args.push('--test');
   }
 
-  // Filter out empty strings (missing optional files)
-  return args.filter(arg => arg !== '');
+  // DO NOT filter out empty strings - they maintain positional arguments
+  // The match-wards-from-csv.js script handles missing files properly
+  return args;
 }
 
 // Run the data processing script
