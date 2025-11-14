@@ -716,7 +716,34 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
         blackPercent: props.blackPercent,
         mixedPercent: props.mixedPercent,
         whitePercent: props.whitePercent,
-        otherPercent: props.otherPercent
+        otherPercent: props.otherPercent,
+        // Census 2021 - Economic Activity
+        employedPercent: props.employedPercent,
+        selfEmployedPercent: props.selfEmployedPercent,
+        unemployedPercent: props.unemployedPercent,
+        studentPercent: props.studentPercent,
+        retiredPercent: props.retiredPercent,
+        // Census 2021 - Country of Birth
+        ukBornPercent: props.ukBornPercent,
+        euBornPercent: props.euBornPercent,
+        nonEuBornPercent: props.nonEuBornPercent,
+        // Census 2021 - Religion
+        christianPercent: props.christianPercent,
+        muslimPercent: props.muslimPercent,
+        hinduPercent: props.hinduPercent,
+        sikhPercent: props.sikhPercent,
+        jewishPercent: props.jewishPercent,
+        noReligionPercent: props.noReligionPercent,
+        // Census 2021 - Housing Tenure
+        ownedOutrightPercent: props.ownedOutrightPercent,
+        ownedMortgagePercent: props.ownedMortgagePercent,
+        socialRentedPercent: props.socialRentedPercent,
+        privateRentedPercent: props.privateRentedPercent,
+        // Census 2021 - Qualifications
+        noQualificationsPercent: props.noQualificationsPercent,
+        level1to3Percent: props.level1to3Percent,
+        level4PlusPercent: props.level4PlusPercent,
+        apprenticeshipPercent: props.apprenticeshipPercent
       });
     }
   }, [isDrawing]);
