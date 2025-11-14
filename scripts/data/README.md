@@ -23,7 +23,7 @@ This system processes LSOA (Lower Layer Super Output Area) census data and aggre
 ### Optional Demographic Data
 If you don't provide these, the corresponding fields will be `null`:
 
-- `lsoa-population.csv` - Population counts and age bands by LSOA
+- `lsoa-age.csv` - Population counts and age bands by LSOA (Census 2021)
 - `lsoa-ethnicity.csv` - Ethnicity (20 categories) by LSOA
 - `lsoa-economic-activity.csv` - Economic activity status (20 categories)
 - `lsoa-country-of-birth.csv` - Country of birth (12 categories)
