@@ -365,24 +365,32 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
     wardResults2024Map
   );
 
-  if (!aggregate2024) {
-    console.log(`  ⚠ Insufficient 2024 ward data for ${constituencyName}`);
-    return false;
+  // Calculate shifts (if we have 2024 data) or use polling directly
+  let shifts;
+  if (aggregate2024) {
+    shifts = {
+      labour: polling2025.labour - aggregate2024.labour,
+      conservative: polling2025.conservative - aggregate2024.conservative,
+      libdem: polling2025.libdem - aggregate2024.libdem,
+      green: polling2025.green - aggregate2024.green,
+      reform: polling2025.reform - aggregate2024.reform
+    };
+
+    console.log(`  ${constituencyName}:`);
+    console.log(`    2024: Lab ${aggregate2024.labour.toFixed(1)}%, Con ${aggregate2024.conservative.toFixed(1)}%, LD ${aggregate2024.libdem.toFixed(1)}%, Reform ${aggregate2024.reform.toFixed(1)}%`);
+    console.log(`    2025: Lab ${polling2025.labour}%, Con ${polling2025.conservative}%, LD ${polling2025.libdem}%, Reform ${polling2025.reform}%`);
+    console.log(`    Shifts: Lab ${shifts.labour > 0 ? '+' : ''}${shifts.labour.toFixed(1)}pp, Con ${shifts.conservative > 0 ? '+' : ''}${shifts.conservative.toFixed(1)}pp, Reform ${shifts.reform > 0 ? '+' : ''}${shifts.reform.toFixed(1)}pp`);
+  } else {
+    // No 2024 constituency data - will rely on polling + similar wards
+    shifts = {
+      labour: 0,
+      conservative: 0,
+      libdem: 0,
+      green: 0,
+      reform: 0
+    };
+    console.log(`  ${constituencyName}: No 2024 data, using similar wards + 2025 polling`);
   }
-
-  // Calculate shifts
-  const shifts = {
-    labour: polling2025.labour - aggregate2024.labour,
-    conservative: polling2025.conservative - aggregate2024.conservative,
-    libdem: polling2025.libdem - aggregate2024.libdem,
-    green: polling2025.green - aggregate2024.green,
-    reform: polling2025.reform - aggregate2024.reform
-  };
-
-  console.log(`  ${constituencyName}:`);
-  console.log(`    2024: Lab ${aggregate2024.labour.toFixed(1)}%, Con ${aggregate2024.conservative.toFixed(1)}%, LD ${aggregate2024.libdem.toFixed(1)}%, Reform ${aggregate2024.reform.toFixed(1)}%`);
-  console.log(`    2025: Lab ${polling2025.labour}%, Con ${polling2025.conservative}%, LD ${polling2025.libdem}%, Reform ${polling2025.reform}%`);
-  console.log(`    Shifts: Lab ${shifts.labour > 0 ? '+' : ''}${shifts.labour.toFixed(1)}pp, Con ${shifts.conservative > 0 ? '+' : ''}${shifts.conservative.toFixed(1)}pp, Reform ${shifts.reform > 0 ? '+' : ''}${shifts.reform.toFixed(1)}pp`);
 
   // Calculate constituency demographic averages
   const constituencyAvgDemographics = calculateConstituencyAverages(constituencyData.wards);
@@ -427,7 +435,37 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
             similarity: Math.round(sw.similarity)
           }));
         } else {
-          // Fallback to constituency average
+          // Fallback to constituency average or polling
+          if (aggregate2024) {
+            baseline2024 = {
+              labour: aggregate2024.labour,
+              conservative: aggregate2024.conservative,
+              libdem: aggregate2024.libdem,
+              green: aggregate2024.green,
+              reform: aggregate2024.reform,
+              independent: aggregate2024.independent || 0
+            };
+            dataSource = 'constituency_avg';
+            baseConfidence = 30;
+            wardsWithConstituencyAvg++;
+          } else {
+            // No aggregate - use polling as baseline
+            baseline2024 = {
+              labour: polling2025.labour,
+              conservative: polling2025.conservative,
+              libdem: polling2025.libdem,
+              green: polling2025.green,
+              reform: polling2025.reform,
+              independent: 0
+            };
+            dataSource = 'polling';
+            baseConfidence = 25;
+            wardsWithConstituencyAvg++;
+          }
+        }
+      } else {
+        // No similar wards found - use constituency average or polling - LOW confidence
+        if (aggregate2024) {
           baseline2024 = {
             labour: aggregate2024.labour,
             conservative: aggregate2024.conservative,
@@ -439,20 +477,20 @@ function processPredictions(constituencyData, wardResults2024Map, constituencyPo
           dataSource = 'constituency_avg';
           baseConfidence = 30;
           wardsWithConstituencyAvg++;
+        } else {
+          // No aggregate - use polling as baseline
+          baseline2024 = {
+            labour: polling2025.labour,
+            conservative: polling2025.conservative,
+            libdem: polling2025.libdem,
+            green: polling2025.green,
+            reform: polling2025.reform,
+            independent: 0
+          };
+          dataSource = 'polling';
+          baseConfidence = 25;
+          wardsWithConstituencyAvg++;
         }
-      } else {
-        // No similar wards found - use constituency average - LOW confidence
-        baseline2024 = {
-          labour: aggregate2024.labour,
-          conservative: aggregate2024.conservative,
-          libdem: aggregate2024.libdem,
-          green: aggregate2024.green,
-          reform: aggregate2024.reform,
-          independent: aggregate2024.independent || 0
-        };
-        dataSource = 'constituency_avg';
-        baseConfidence = 30;
-        wardsWithConstituencyAvg++;
       }
     }
 
