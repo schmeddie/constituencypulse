@@ -170,7 +170,16 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
       };
     }
 
-    const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity', 'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite'].find(
+    const activeDemographic = [
+      'imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment',
+      'age', 'populationDensity',
+      'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite',
+      'economicEmployed', 'economicSelfEmployed', 'economicUnemployed', 'economicRetired', 'economicStudent',
+      'ukBorn', 'euBorn', 'nonEuBorn',
+      'religionChristian', 'religionMuslim', 'religionHindu', 'religionSikh', 'religionJewish', 'religionNone',
+      'housingOwnedOutright', 'housingOwnedMortgage', 'housingSocialRented', 'housingPrivateRented',
+      'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship'
+    ].find(
       layer => activeLayers?.[layer]
     );
 
@@ -712,7 +721,16 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
   }, [isDrawing]);
 
   // Determine which demographic layer is active for legend/info
-  const activeDemographic = ['imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment', 'age', 'populationDensity', 'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite'].find(
+  const activeDemographic = [
+    'imd', 'income', 'education', 'employment', 'health', 'crime', 'housing', 'environment',
+    'age', 'populationDensity',
+    'ethnicityAsian', 'ethnicityBlack', 'ethnicityMixed', 'ethnicityWhite',
+    'economicEmployed', 'economicSelfEmployed', 'economicUnemployed', 'economicRetired', 'economicStudent',
+    'ukBorn', 'euBorn', 'nonEuBorn',
+    'religionChristian', 'religionMuslim', 'religionHindu', 'religionSikh', 'religionJewish', 'religionNone',
+    'housingOwnedOutright', 'housingOwnedMortgage', 'housingSocialRented', 'housingPrivateRented',
+    'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship'
+  ].find(
     layer => activeLayers?.[layer]
   );
 
