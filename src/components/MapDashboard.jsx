@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import DrawingControls from './DrawingControls';
 import RegionSelector from './RegionSelector';
 import { applyFiltersToWards } from '../utils/filterUtils';
-import { LAYER_METADATA, formatPopupValue, shouldShowDeprivationNote } from '../utils/layerMetadata';
+import { LAYER_METADATA, formatPopupValue, shouldShowDeprivationNote, getPartyColor, getPartyDisplayName } from '../utils/layerMetadata';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -179,7 +179,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
       'ukBorn', 'euBorn', 'nonEuBorn',
       'religionChristian', 'religionMuslim', 'religionHindu', 'religionSikh', 'religionJewish', 'religionNone',
       'housingOwnedOutright', 'housingOwnedMortgage', 'housingSocialRented', 'housingPrivateRented',
-      'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship'
+      'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship',
+      'prediction2025'
     ].find(
       layer => activeLayers?.[layer]
     );
@@ -333,6 +334,14 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             case 'qualificationsApprenticeship':
               fillColor = getColorForPercentage(ward.demographics.apprenticeshipPercent);
               break;
+            // Political Predictions
+            case 'prediction2025':
+              if (ward.demographics.predicted2025 && ward.demographics.predicted2025.winner) {
+                fillColor = getPartyColor(ward.demographics.predicted2025.winner);
+              } else {
+                fillColor = 'rgba(200, 200, 200, 0.3)';
+              }
+              break;
           }
         }
 
@@ -440,6 +449,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
             level1to3Percent: ward.demographics.level1to3Percent,
             level4PlusPercent: ward.demographics.level4PlusPercent,
             apprenticeshipPercent: ward.demographics.apprenticeshipPercent,
+            // Political Predictions
+            predicted2025: ward.demographics.predicted2025,
             fillColor: fillColor
           },
           geometry: geometry
@@ -770,7 +781,9 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
         noQualificationsPercent: props.noQualificationsPercent,
         level1to3Percent: props.level1to3Percent,
         level4PlusPercent: props.level4PlusPercent,
-        apprenticeshipPercent: props.apprenticeshipPercent
+        apprenticeshipPercent: props.apprenticeshipPercent,
+        // Political Predictions
+        predicted2025: props.predicted2025
       });
     }
   }, [isDrawing]);
@@ -784,7 +797,8 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
     'ukBorn', 'euBorn', 'nonEuBorn',
     'religionChristian', 'religionMuslim', 'religionHindu', 'religionSikh', 'religionJewish', 'religionNone',
     'housingOwnedOutright', 'housingOwnedMortgage', 'housingSocialRented', 'housingPrivateRented',
-    'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship'
+    'qualificationsNone', 'qualificationsLevel1to3', 'qualificationsLevel4Plus', 'qualificationsApprenticeship',
+    'prediction2025'
   ].find(
     layer => activeLayers?.[layer]
   );
@@ -1039,6 +1053,63 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                     {shouldShowDeprivationNote(activeDemographic) && (
                       <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
                         (1 = most deprived, 10 = least deprived)
+                      </div>
+                    )}
+
+                    {/* Show detailed prediction breakdown */}
+                    {activeDemographic === 'prediction2025' && selectedWard.predicted2025 && (
+                      <div style={{ marginTop: '8px', fontSize: '12px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {Object.entries(selectedWard.predicted2025)
+                            .filter(([key]) => !['winner', 'confidence', 'keyFactors'].includes(key))
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([party, vote]) => (
+                              <div key={party} style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <span style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}>
+                                  <span style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '2px',
+                                    backgroundColor: getPartyColor(party),
+                                    display: 'inline-block'
+                                  }}></span>
+                                  {getPartyDisplayName(party)}
+                                </span>
+                                <span style={{ fontWeight: '600' }}>{vote}%</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                        {selectedWard.predicted2025.keyFactors && selectedWard.predicted2025.keyFactors.length > 0 && (
+                          <div style={{
+                            marginTop: '8px',
+                            paddingTop: '8px',
+                            borderTop: '1px solid #e5e7eb',
+                            fontSize: '11px',
+                            color: '#6b7280'
+                          }}>
+                            <div style={{ fontWeight: '600', marginBottom: '4px' }}>Key factors:</div>
+                            {selectedWard.predicted2025.keyFactors.map((factor, i) => (
+                              <div key={i}>• {factor}</div>
+                            ))}
+                          </div>
+                        )}
+                        <div style={{
+                          marginTop: '6px',
+                          fontSize: '10px',
+                          color: '#9ca3af',
+                          fontStyle: 'italic'
+                        }}>
+                          Confidence: {selectedWard.predicted2025.confidence}%
+                        </div>
                       </div>
                     )}
                   </div>
