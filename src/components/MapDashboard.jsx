@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import DrawingControls from './DrawingControls';
 import RegionSelector from './RegionSelector';
 import { applyFiltersToWards } from '../utils/filterUtils';
+import { LAYER_METADATA, formatPopupValue, shouldShowDeprivationNote } from '../utils/layerMetadata';
 
 // Mapbox token - set VITE_MAPBOX_TOKEN in .env file
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN_HERE';
@@ -976,54 +977,12 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                       letterSpacing: '0.05em',
                       marginBottom: '4px'
                     }}>
-                      {activeDemographic === 'imd' && 'IMD - Overall Deprivation'}
-                      {activeDemographic === 'income' && 'Income Deprivation'}
-                      {activeDemographic === 'education' && 'Education Deprivation'}
-                      {activeDemographic === 'employment' && 'Employment Deprivation'}
-                      {activeDemographic === 'health' && 'Health Deprivation'}
-                      {activeDemographic === 'crime' && 'Crime Levels'}
-                      {activeDemographic === 'housing' && 'Housing Barriers'}
-                      {activeDemographic === 'environment' && 'Living Environment'}
-                      {activeDemographic === 'age' && 'Average Age'}
-                      {activeDemographic === 'populationDensity' && 'Population Density'}
-                      {activeDemographic === 'ethnicityAsian' && 'Ethnicity: % Asian'}
-                      {activeDemographic === 'ethnicityBlack' && 'Ethnicity: % Black'}
-                      {activeDemographic === 'ethnicityMixed' && 'Ethnicity: % Mixed'}
-                      {activeDemographic === 'ethnicityWhite' && 'Ethnicity: % White'}
+                      {LAYER_METADATA[activeDemographic]?.label || activeDemographic}
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
-                      {activeDemographic === 'age' ? (
-                        `${selectedWard.averageAge || 'N/A'} years`
-                      ) : activeDemographic === 'populationDensity' ? (
-                        'View on map'
-                      ) : activeDemographic === 'ethnicityAsian' ? (
-                        `${selectedWard.asianPercent || 'N/A'}%`
-                      ) : activeDemographic === 'ethnicityBlack' ? (
-                        `${selectedWard.blackPercent || 'N/A'}%`
-                      ) : activeDemographic === 'ethnicityMixed' ? (
-                        `${selectedWard.mixedPercent || 'N/A'}%`
-                      ) : activeDemographic === 'ethnicityWhite' ? (
-                        `${selectedWard.whitePercent || 'N/A'}%`
-                      ) : (
-                        `Decile ${
-                          activeDemographic === 'imd' ? selectedWard.imdDecile :
-                          activeDemographic === 'income' ? selectedWard.incomeDecile :
-                          activeDemographic === 'education' ? selectedWard.educationDecile :
-                          activeDemographic === 'employment' ? selectedWard.employmentDecile :
-                          activeDemographic === 'health' ? selectedWard.healthDecile :
-                          activeDemographic === 'crime' ? selectedWard.crimeDecile :
-                          activeDemographic === 'housing' ? selectedWard.housingDecile :
-                          activeDemographic === 'environment' ? selectedWard.environmentDecile :
-                          'N/A'
-                        } / 10`
-                      )}
+                      {formatPopupValue(activeDemographic, selectedWard)}
                     </div>
-                    {activeDemographic !== 'age' &&
-                     activeDemographic !== 'populationDensity' &&
-                     activeDemographic !== 'ethnicityAsian' &&
-                     activeDemographic !== 'ethnicityBlack' &&
-                     activeDemographic !== 'ethnicityMixed' &&
-                     activeDemographic !== 'ethnicityWhite' && (
+                    {shouldShowDeprivationNote(activeDemographic) && (
                       <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
                         (1 = most deprived, 10 = least deprived)
                       </div>
@@ -1191,23 +1150,10 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
           fontFamily: 'Inter, sans-serif'
         }}>
           <div style={{ fontWeight: 600, marginBottom: '8px', color: '#1f2937' }}>
-            {activeDemographic === 'imd' && 'IMD - Overall Deprivation'}
-            {activeDemographic === 'income' && 'Income Deprivation'}
-            {activeDemographic === 'education' && 'Education Deprivation'}
-            {activeDemographic === 'employment' && 'Employment Deprivation'}
-            {activeDemographic === 'health' && 'Health Deprivation'}
-            {activeDemographic === 'crime' && 'Crime Levels'}
-            {activeDemographic === 'housing' && 'Housing Barriers'}
-            {activeDemographic === 'environment' && 'Living Environment'}
-            {activeDemographic === 'age' && 'Average Age'}
-            {activeDemographic === 'populationDensity' && 'Population Density'}
-            {activeDemographic === 'ethnicityAsian' && 'Ethnicity: % Asian'}
-            {activeDemographic === 'ethnicityBlack' && 'Ethnicity: % Black'}
-            {activeDemographic === 'ethnicityMixed' && 'Ethnicity: % Mixed'}
-            {activeDemographic === 'ethnicityWhite' && 'Ethnicity: % White'}
+            {LAYER_METADATA[activeDemographic]?.label || activeDemographic}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {activeDemographic === 'age' ? (
+            {LAYER_METADATA[activeDemographic]?.type === 'age' ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '20px', height: '12px', background: '#dbeafe', border: '1px solid #ccc' }}></div>
@@ -1230,7 +1176,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                   <span>50+ years</span>
                 </div>
               </>
-            ) : activeDemographic === 'populationDensity' ? (
+            ) : LAYER_METADATA[activeDemographic]?.type === 'density' ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '20px', height: '12px', background: '#f0fdf4', border: '1px solid #ccc' }}></div>
@@ -1253,7 +1199,7 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                   <span>8k+ per km²</span>
                 </div>
               </>
-            ) : (activeDemographic === 'ethnicityAsian' || activeDemographic === 'ethnicityBlack' || activeDemographic === 'ethnicityMixed' || activeDemographic === 'ethnicityWhite') ? (
+            ) : LAYER_METADATA[activeDemographic]?.type === 'ethnicity' ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '20px', height: '12px', background: '#fef3c7', border: '1px solid #ccc' }}></div>
@@ -1273,6 +1219,29 @@ const MapDashboard = ({ activeLayers, visibleEvents, constituencyData, correlati
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '20px', height: '12px', background: '#ca8a04', border: '1px solid #ccc' }}></div>
+                  <span>75-100%</span>
+                </div>
+              </>
+            ) : LAYER_METADATA[activeDemographic]?.type === 'percentage' ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#dbeafe', border: '1px solid #ccc' }}></div>
+                  <span>&lt; 10%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#93c5fd', border: '1px solid #ccc' }}></div>
+                  <span>10-25%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#60a5fa', border: '1px solid #ccc' }}></div>
+                  <span>25-50%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#3b82f6', border: '1px solid #ccc' }}></div>
+                  <span>50-75%</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '20px', height: '12px', background: '#2563eb', border: '1px solid #ccc' }}></div>
                   <span>75-100%</span>
                 </div>
               </>
