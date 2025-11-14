@@ -7,6 +7,7 @@ const WardRankings = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
 
   const metrics = [
+    // Deprivation Indices
     { value: 'imd', label: 'Overall Deprivation (IMD)', inverted: true },
     { value: 'income', label: 'Income Deprivation', inverted: true },
     { value: 'education', label: 'Education Deprivation', inverted: true },
@@ -15,12 +16,48 @@ const WardRankings = ({ isOpen, onClose }) => {
     { value: 'crime', label: 'Crime Levels', inverted: true },
     { value: 'housing', label: 'Housing Barriers', inverted: true },
     { value: 'environment', label: 'Living Environment', inverted: true },
+
+    // Demographics
     { value: 'age', label: 'Average Age', inverted: false },
     { value: 'population', label: 'Population', inverted: false },
+
+    // Ethnicity
     { value: 'ethnicityAsian', label: '% Asian Population', inverted: false },
     { value: 'ethnicityBlack', label: '% Black Population', inverted: false },
     { value: 'ethnicityMixed', label: '% Mixed Population', inverted: false },
     { value: 'ethnicityWhite', label: '% White Population', inverted: false },
+
+    // Economic Activity
+    { value: 'economicEmployed', label: '% Employed', inverted: false },
+    { value: 'economicSelfEmployed', label: '% Self-Employed', inverted: false },
+    { value: 'economicUnemployed', label: '% Unemployed', inverted: false },
+    { value: 'economicRetired', label: '% Retired', inverted: false },
+    { value: 'economicStudent', label: '% Students', inverted: false },
+
+    // Country of Birth
+    { value: 'ukBorn', label: '% UK Born', inverted: false },
+    { value: 'euBorn', label: '% EU Born', inverted: false },
+    { value: 'nonEuBorn', label: '% Non-EU Born', inverted: false },
+
+    // Religion
+    { value: 'religionChristian', label: '% Christian', inverted: false },
+    { value: 'religionMuslim', label: '% Muslim', inverted: false },
+    { value: 'religionHindu', label: '% Hindu', inverted: false },
+    { value: 'religionSikh', label: '% Sikh', inverted: false },
+    { value: 'religionJewish', label: '% Jewish', inverted: false },
+    { value: 'religionNone', label: '% No Religion', inverted: false },
+
+    // Housing Tenure
+    { value: 'housingOwnedOutright', label: '% Owned Outright', inverted: false },
+    { value: 'housingOwnedMortgage', label: '% Owned with Mortgage', inverted: false },
+    { value: 'housingSocialRented', label: '% Social Rented', inverted: false },
+    { value: 'housingPrivateRented', label: '% Private Rented', inverted: false },
+
+    // Qualifications
+    { value: 'qualificationsNone', label: '% No Qualifications', inverted: false },
+    { value: 'qualificationsLevel1to3', label: '% Level 1-3 Qualifications', inverted: false },
+    { value: 'qualificationsLevel4Plus', label: '% Level 4+ (Degree)', inverted: false },
+    { value: 'qualificationsApprenticeship', label: '% Apprenticeship', inverted: false },
   ];
 
   const metricMapping = {
@@ -38,6 +75,28 @@ const WardRankings = ({ isOpen, onClose }) => {
     'ethnicityBlack': 'blackPercent',
     'ethnicityMixed': 'mixedPercent',
     'ethnicityWhite': 'whitePercent',
+    'economicEmployed': 'employedPercent',
+    'economicSelfEmployed': 'selfEmployedPercent',
+    'economicUnemployed': 'unemployedPercent',
+    'economicRetired': 'retiredPercent',
+    'economicStudent': 'studentPercent',
+    'ukBorn': 'ukBornPercent',
+    'euBorn': 'euBornPercent',
+    'nonEuBorn': 'nonEuBornPercent',
+    'religionChristian': 'christianPercent',
+    'religionMuslim': 'muslimPercent',
+    'religionHindu': 'hinduPercent',
+    'religionSikh': 'sikhPercent',
+    'religionJewish': 'jewishPercent',
+    'religionNone': 'noReligionPercent',
+    'housingOwnedOutright': 'ownedOutrightPercent',
+    'housingOwnedMortgage': 'ownedMortgagePercent',
+    'housingSocialRented': 'socialRentedPercent',
+    'housingPrivateRented': 'privateRentedPercent',
+    'qualificationsNone': 'noQualificationsPercent',
+    'qualificationsLevel1to3': 'level1to3Percent',
+    'qualificationsLevel4Plus': 'level4PlusPercent',
+    'qualificationsApprenticeship': 'apprenticeshipPercent',
   };
 
   useEffect(() => {
