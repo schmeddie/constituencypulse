@@ -26,7 +26,7 @@ const EXPECTED_FILES = {
   optional: {
     'lsoa-deprivation.csv': 'LSOA Deprivation indices',
     'lsoa-ward-mapping.csv': 'LSOA-Ward mapping',
-    'lsoa-population.csv': 'LSOA Population & age',
+    'lsoa-age.csv': 'LSOA Population & age',
     'lsoa-ethnicity.csv': 'LSOA Ethnicity data',
     'lsoa-economic-activity.csv': 'LSOA Economic activity',
     'lsoa-country-of-birth.csv': 'LSOA Country of birth',
@@ -132,7 +132,7 @@ function buildArguments(detected) {
   // Optional arguments (in specific order expected by the script)
   args.push(detected.optional['lsoa-deprivation.csv'] || '');
   args.push(detected.optional['lsoa-ward-mapping.csv'] || '');
-  args.push(detected.optional['lsoa-population.csv'] || '');
+  args.push(detected.optional['lsoa-age.csv'] || '');
   args.push(detected.optional['lsoa-ethnicity.csv'] || '');
   args.push(detected.optional['lsoa-economic-activity.csv'] || '');
   args.push(detected.optional['lsoa-country-of-birth.csv'] || '');

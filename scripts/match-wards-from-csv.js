@@ -12,7 +12,7 @@ const CSV_PATH = process.argv[2] || './ward-constituency-mapping.csv';
 const WARDS_GEOJSON_PATH = process.argv[3] || './wards.geojson';
 const LSOA_DATA_PATH = process.argv[4]; // Optional: LSOA deprivation data CSV
 const LSOA_WARD_MAPPING_PATH = process.argv[5]; // Optional: LSOA to Ward mapping CSV
-const LSOA_POPULATION_PATH = process.argv[6]; // Optional: LSOA population/age data CSV
+const LSOA_POPULATION_PATH = process.argv[6]; // Optional: LSOA age/population data CSV (lsoa-age.csv)
 const LSOA_ETHNICITY_PATH = process.argv[7]; // Optional: LSOA ethnicity data CSV
 const LSOA_ECONOMIC_ACTIVITY_PATH = process.argv[8]; // Optional: LSOA economic activity data CSV
 const LSOA_COUNTRY_OF_BIRTH_PATH = process.argv[9]; // Optional: LSOA country of birth data CSV
@@ -511,19 +511,19 @@ function loadLSOAData() {
   };
 }
 
-// Load and process LSOA population/age data
+// Load and process LSOA age/population data
 function loadLSOAPopulationData() {
   if (!LSOA_POPULATION_PATH || LSOA_POPULATION_PATH === '') {
-    console.log('⚠️  LSOA population data not provided - population fields will be null\n');
+    console.log('⚠️  LSOA age/population data not provided - population fields will be null\n');
     return null;
   }
 
   if (!fs.existsSync(LSOA_POPULATION_PATH)) {
-    console.warn(`⚠️  LSOA population file not found: ${LSOA_POPULATION_PATH} - skipping\n`);
+    console.warn(`⚠️  LSOA age file not found: ${LSOA_POPULATION_PATH} - skipping\n`);
     return null;
   }
 
-  console.log(`Loading LSOA population data from: ${LSOA_POPULATION_PATH}...`);
+  console.log(`Loading LSOA age/population data from: ${LSOA_POPULATION_PATH}...`);
 
   // Load LSOA population/age data
   let popContent = fs.readFileSync(LSOA_POPULATION_PATH, 'utf8');
